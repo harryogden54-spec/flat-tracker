@@ -7,7 +7,8 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
+    /* ── THEMES ── */
+    :root, [data-theme="dark"] {
       --bg: #0f1117;
       --surface: #1a1d27;
       --surface2: #22263a;
@@ -16,6 +17,50 @@
       --accent2: #a78bfa;
       --text: #e2e8f0;
       --muted: #8892b0;
+      --header-bg: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
+      --shadow: rgba(0,0,0,0.35);
+    }
+
+    [data-theme="light"] {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface2: #eef0f7;
+      --border: #d8dce8;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --text: #1a1d2e;
+      --muted: #6b7280;
+      --header-bg: linear-gradient(135deg, #ffffff 0%, #eef0f7 100%);
+      --shadow: rgba(100,100,140,0.12);
+    }
+
+    [data-theme="dusk"] {
+      --bg: #191410;
+      --surface: #231c16;
+      --surface2: #2d2318;
+      --border: #3d3025;
+      --accent: #f59e0b;
+      --accent2: #fbbf24;
+      --text: #f5e6d0;
+      --muted: #a08870;
+      --header-bg: linear-gradient(135deg, #231c16 0%, #2d2318 100%);
+      --shadow: rgba(0,0,0,0.4);
+    }
+
+    [data-theme="ocean"] {
+      --bg: #080f1e;
+      --surface: #0d1a30;
+      --surface2: #12243f;
+      --border: #1c3558;
+      --accent: #38bdf8;
+      --accent2: #7dd3fc;
+      --text: #e0f2fe;
+      --muted: #6ea8cc;
+      --header-bg: linear-gradient(135deg, #0d1a30 0%, #12243f 100%);
+      --shadow: rgba(0,0,0,0.45);
+    }
+
+    :root {
       --c-interested: #3b82f6;
       --c-viewing: #f59e0b;
       --c-applied: #10b981;
@@ -32,7 +77,7 @@
     }
 
     header {
-      background: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
+      background: var(--header-bg);
       border-bottom: 1px solid var(--border);
       padding: 20px 20px 16px;
       position: sticky;
@@ -53,7 +98,7 @@
     h1 {
       font-size: 1.5rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #a78bfa, #6c63ff);
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -152,10 +197,10 @@
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
     textarea { resize: vertical; min-height: 70px; }
-    select option { background: #1a1d27; }
+    select option { background: var(--surface); }
 
     .btn-add {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -232,7 +277,34 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .card:hover { box-shadow: 0 4px 20px var(--shadow); }
+
+    /* ── THEME SWITCHER ── */
+    .theme-switcher {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .theme-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      padding: 0;
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .theme-swatch:hover { transform: scale(1.2); }
+    .theme-swatch.active { border-color: var(--text); }
+
+    .theme-swatch[data-t="dark"]  { background: conic-gradient(#0f1117 0% 50%, #6c63ff 50%); }
+    .theme-swatch[data-t="light"] { background: conic-gradient(#f4f6fb 0% 50%, #6c63ff 50%); }
+    .theme-swatch[data-t="dusk"]  { background: conic-gradient(#191410 0% 50%, #f59e0b 50%); }
+    .theme-swatch[data-t="ocean"] { background: conic-gradient(#080f1e 0% 50%, #38bdf8 50%); }
 
     .card.status-interested { border-left-color: var(--c-interested); }
     .card.status-viewing    { border-left-color: var(--c-viewing); }
@@ -355,15 +427,22 @@
   <div class="header-inner">
     <div class="header-top">
       <h1>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6c63ff"/></linearGradient></defs>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
         Flat Tracker
       </h1>
-      <div class="rt-indicator">
-        <div class="rt-dot" id="rt-dot"></div>
-        <span id="rt-label">Connecting…</span>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="theme-switcher" id="theme-switcher">
+          <button class="theme-swatch active" data-t="dark"  title="Dark"  onclick="setTheme('dark')"></button>
+          <button class="theme-swatch"        data-t="light" title="Light" onclick="setTheme('light')"></button>
+          <button class="theme-swatch"        data-t="dusk"  title="Dusk"  onclick="setTheme('dusk')"></button>
+          <button class="theme-swatch"        data-t="ocean" title="Ocean" onclick="setTheme('ocean')"></button>
+        </div>
+        <div class="rt-indicator">
+          <div class="rt-dot" id="rt-dot"></div>
+          <span id="rt-label">Connecting…</span>
+        </div>
       </div>
     </div>
     <div class="stats-bar">
@@ -558,10 +637,10 @@
   function renderStats() {
     const total = listings.length;
     document.getElementById('stat-total').textContent = total;
-    if (!total) { document.getElementById('stat-avg-rent').textContent='\u2014'; document.getElementById('stat-avg-pp').textContent='\u2014'; return; }
+    if (!total) { document.getElementById('stat-avg-rent').textContent='—'; document.getElementById('stat-avg-pp').textContent='—'; return; }
     const avg = listings.reduce((s,l)=>s+parseFloat(l.monthly_rent||0),0)/total;
-    document.getElementById('stat-avg-rent').textContent=`\u00a3${Math.round(avg).toLocaleString()}`;
-    document.getElementById('stat-avg-pp').textContent=`\u00a3${Math.round(avg/3).toLocaleString()}`;
+    document.getElementById('stat-avg-rent').textContent=`£${Math.round(avg).toLocaleString()}`;
+    document.getElementById('stat-avg-pp').textContent=`£${Math.round(avg/3).toLocaleString()}`;
   }
 
   const SVG_MAP=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
@@ -613,6 +692,19 @@
   }
 
   function escHtml(str) { if(!str)return''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('ft-theme', t);
+    document.querySelectorAll('.theme-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.t === t);
+    });
+  }
+
+  (function initTheme() {
+    const saved = localStorage.getItem('ft-theme') || 'dark';
+    setTheme(saved);
+  })();
 
   fetchListings();
   connectRealtime();
