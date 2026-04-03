@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flat Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #8892b0;
+      --interested: #3b82f6;
+      --viewing: #f59e0b;
+      --applied: #10b981;
+      --rejected: #ef4444;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 20px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #6c63ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 0;
+    }
+
+    /* ── ADD FORM ── */
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .add-form h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.78rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    select option { background: #1a1d27; }
+
+    .btn-add {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-add:hover { opacity: 0.9; }
+    .btn-add:active { transform: scale(0.98); }
+
+    /* ── CARDS ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .card-address {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-interested { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-viewing    { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-applied    { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-rejected   { background: rgba(239,68,68,0.2);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+    .card-rent {
+      display: flex;
+      gap: 20px;
+    }
+
+    .rent-item { display: flex; flex-direction: column; }
+    .rent-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.4px; margin-bottom: 2px; }
+    .rent-value { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .rent-value span { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .card-notes {
+      font-size: 0.83rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .card-notes.has-notes { display: block; }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .card-actions select {
+      flex: 1;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      min-width: 130px;
+    }
+
+    .btn-link {
+      font-size: 0.8rem;
+      color: var(--accent2);
+      text-decoration: none;
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-link:hover { background: var(--border); }
+
+    .btn-remove {
+      background: rgba(239,68,68,0.1);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-remove:hover { background: rgba(239,68,68,0.2); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.95rem; }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.3rem; }
+      .add-form { padding: 18px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .card-rent { flex-wrap: wrap; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>🏠 Flat Tracker</h1>
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat">Total <strong id="stat-total">—</strong></div>
+      <div class="stat">Avg rent <strong id="stat-avg-rent">—</strong></div>
+      <div class="stat">Avg per person <strong id="stat-avg-pp">—</strong></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Add Form -->
+  <div class="add-form">
+    <h2>Add new listing</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label for="f-address">Address</label>
+        <input id="f-address" type="text" placeholder="e.g. 42 Marchmont Street, Edinburgh EH9 1HX" />
+      </div>
+      <div class="form-group full">
+        <label for="f-link">Listing URL</label>
+        <input id="f-link" type="url" placeholder="https://rightmove.co.uk/..." />
+      </div>
+      <div class="form-group">
+        <label for="f-rent">Monthly Rent (£)</label>
+        <input id="f-rent" type="number" placeholder="1800" min="0" />
+      </div>
+      <div class="form-group">
+        <label for="f-date">Move-in Date</label>
+        <input id="f-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label for="f-status">Status</label>
+        <select id="f-status">
+          <option value="interested">Interested</option>
+          <option value="viewing">Viewing</option>
+          <option value="applied">Applied</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label for="f-notes">Notes</label>
+        <textarea id="f-notes" placeholder="Bills included? Garden? Parking? Landlord vibes?"></textarea>
+      </div>
+    </div>
+    <button class="btn-add" id="btn-add" onclick="addListing()">Add Listing</button>
+  </div>
+
+  <!-- Cards -->
+  <div id="cards-container">
+    <div class="loading">Loading listings…</div>
+  </div>
+</main>
+
+<script>
+  const SUPABASE_URL = 'https://llszaawcnawztybbxhtm.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_eGSmV8QpCFQGQXfgnmI3eA_VNFrgWdB';
+  const TABLE = 'flats';
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Prefer': 'return=representation'
+  };
+
+  let listings = [];
+
+  async function fetchListings() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?order=created_at.desc`, { headers });
+      if (!res.ok) throw new Error(await res.text());
+      listings = await res.json();
+      render();
+    } catch (e) {
+      document.getElementById('cards-container').innerHTML =
+        `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load listings: ${e.message}</p></div>`;
+    }
+  }
+
+  async function addListing() {
+    const address = document.getElementById('f-address').value.trim();
+    const link    = document.getElementById('f-link').value.trim();
+    const rent    = parseFloat(document.getElementById('f-rent').value);
+    const date    = document.getElementById('f-date').value;
+    const status  = document.getElementById('f-status').value;
+    const notes   = document.getElementById('f-notes').value.trim();
+
+    if (!address) { alert('Address is required.'); return; }
+    if (!rent || rent <= 0) { alert('Please enter a valid monthly rent.'); return; }
+
+    const btn = document.getElementById('btn-add');
+    btn.textContent = 'Adding…';
+    btn.disabled = true;
+
+    try {
+      const body = { address, link: link || null, monthly_rent: rent, move_in_date: date || null, notes: notes || null, status };
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const [created] = await res.json();
+      listings.unshift(created);
+      clearForm();
+      render();
+    } catch (e) {
+      alert('Failed to add listing: ' + e.message);
+    } finally {
+      btn.textContent = 'Add Listing';
+      btn.disabled = false;
+    }
+  }
+
+  async function removeListing(id) {
+    if (!confirm('Remove this listing?')) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, { method: 'DELETE', headers });
+      if (!res.ok) throw new Error(await res.text());
+      listings = listings.filter(l => l.id !== id);
+      render();
+    } catch (e) {
+      alert('Failed to remove: ' + e.message);
+    }
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const idx = listings.findIndex(l => l.id === id);
+      if (idx !== -1) { listings[idx].status = status; render(); }
+    } catch (e) {
+      alert('Failed to update status: ' + e.message);
+    }
+  }
+
+  function clearForm() {
+    ['f-address','f-link','f-rent','f-date','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-status').value = 'interested';
+  }
+
+  function formatDate(d) {
+    if (!d) return null;
+    const [y,m,day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+
+  function badgeClass(status) {
+    const map = { interested: 'badge-interested', viewing: 'badge-viewing', applied: 'badge-applied', rejected: 'badge-rejected' };
+    return map[status] || 'badge-interested';
+  }
+
+  function badgeLabel(status) {
+    return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Interested';
+  }
+
+  function renderStats() {
+    const total = listings.length;
+    document.getElementById('stat-total').textContent = total;
+    if (total === 0) {
+      document.getElementById('stat-avg-rent').textContent = '—';
+      document.getElementById('stat-avg-pp').textContent = '—';
+      return;
+    }
+    const avg = listings.reduce((s, l) => s + parseFloat(l.monthly_rent || 0), 0) / total;
+    document.getElementById('stat-avg-rent').textContent = `£${Math.round(avg).toLocaleString()}/mo`;
+    document.getElementById('stat-avg-pp').textContent = `£${Math.round(avg / 3).toLocaleString()}/mo`;
+  }
+
+  function renderCard(l) {
+    const ppRent = (parseFloat(l.monthly_rent) / 3).toFixed(0);
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(l.address)}`;
+    const status = l.status || 'interested';
+
+    return `
+      <div class="card" id="card-${l.id}">
+        <div class="card-header">
+          <div class="card-address">${escHtml(l.address)}</div>
+          <span class="badge ${badgeClass(status)}">${badgeLabel(status)}</span>
+        </div>
+        <div class="card-rent">
+          <div class="rent-item">
+            <span class="rent-label">Monthly</span>
+            <span class="rent-value">£${parseFloat(l.monthly_rent).toLocaleString()}<span>/mo</span></span>
+          </div>
+          <div class="rent-item">
+            <span class="rent-label">Per Person (÷3)</span>
+            <span class="rent-value">£${parseInt(ppRent).toLocaleString()}<span>/mo</span></span>
+          </div>
+        </div>
+        <div class="card-meta">
+          ${l.move_in_date ? `<span>📅 Available ${formatDate(l.move_in_date)}</span>` : ''}
+        </div>
+        ${l.notes ? `<div class="card-notes has-notes">${escHtml(l.notes)}</div>` : '<div class="card-notes"></div>'}
+        <div class="card-actions">
+          <select onchange="updateStatus('${l.id}', this.value)" aria-label="Status">
+            <option value="interested" ${status === 'interested' ? 'selected' : ''}>Interested</option>
+            <option value="viewing"    ${status === 'viewing'    ? 'selected' : ''}>Viewing</option>
+            <option value="applied"    ${status === 'applied'    ? 'selected' : ''}>Applied</option>
+            <option value="rejected"   ${status === 'rejected'   ? 'selected' : ''}>Rejected</option>
+          </select>
+          <a class="btn-link" href="${mapsUrl}" target="_blank" rel="noopener">Open in Maps →</a>
+          ${l.link ? `<a class="btn-link" href="${escHtml(l.link)}" target="_blank" rel="noopener">Listing ↗</a>` : ''}
+          <button class="btn-remove" onclick="removeListing('${l.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    renderStats();
+    const container = document.getElementById('cards-container');
+    if (listings.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">🏠</div><p>No listings yet — add one above.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="cards-grid">${listings.map(renderCard).join('')}</div>`;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  fetchListings();
+</script>
+</body>
+</html>
