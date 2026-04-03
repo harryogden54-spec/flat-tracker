@@ -16,10 +16,10 @@
       --accent2: #a78bfa;
       --text: #e2e8f0;
       --muted: #8892b0;
-      --interested: #3b82f6;
-      --viewing: #f59e0b;
-      --applied: #10b981;
-      --rejected: #ef4444;
+      --c-interested: #3b82f6;
+      --c-viewing: #f59e0b;
+      --c-applied: #10b981;
+      --c-rejected: #ef4444;
       --radius: 12px;
     }
 
@@ -34,91 +34,103 @@
     header {
       background: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
       border-bottom: 1px solid var(--border);
-      padding: 24px 20px 20px;
+      padding: 20px 20px 16px;
       position: sticky;
       top: 0;
       z-index: 100;
       backdrop-filter: blur(12px);
     }
 
-    .header-inner {
-      max-width: 1100px;
-      margin: 0 auto;
+    .header-inner { max-width: 1100px; margin: 0 auto; }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
 
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 700;
       background: linear-gradient(135deg, #a78bfa, #6c63ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: -0.5px;
-      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .stats-bar {
+    h1 svg { flex-shrink: 0; }
+
+    .rt-indicator {
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
     }
+
+    .rt-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+
+    .rt-dot.live { background: var(--c-applied); box-shadow: 0 0 6px var(--c-applied); }
+    .rt-dot.error { background: var(--c-rejected); }
+
+    .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; }
 
     .stat {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 0.82rem;
+      padding: 7px 14px 7px 10px;
+      font-size: 0.8rem;
       color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .stat strong {
-      color: var(--text);
-      font-size: 1rem;
-    }
+    .stat svg { opacity: 0.6; flex-shrink: 0; }
+    .stat strong { color: var(--text); font-size: 0.95rem; margin-left: 2px; }
 
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 20px 0;
-    }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 0; }
 
-    /* ── ADD FORM ── */
     .add-form {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 32px;
+      padding: 22px;
+      margin-bottom: 24px;
     }
 
     .add-form h2 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 18px;
+      font-size: 0.72rem;
+      font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-size: 0.78rem;
+      letter-spacing: 0.6px;
+      margin-bottom: 16px;
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
     .form-group.full { grid-column: 1 / -1; }
 
     label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: var(--muted);
       text-transform: uppercase;
@@ -129,21 +141,17 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 9px 11px;
       color: var(--text);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-family: inherit;
       transition: border-color 0.15s;
       width: 100%;
     }
 
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
-    textarea { resize: vertical; min-height: 80px; }
-
+    textarea { resize: vertical; min-height: 70px; }
     select option { background: #1a1d27; }
 
     .btn-add {
@@ -151,55 +159,94 @@
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 10px 24px;
-      font-size: 0.9rem;
+      padding: 9px 22px;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       transition: opacity 0.15s, transform 0.1s;
     }
 
-    .btn-add:hover { opacity: 0.9; }
+    .btn-add:hover { opacity: 0.88; }
     .btn-add:active { transform: scale(0.98); }
+    .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── CARDS ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+
+    .pill {
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .pill:hover { border-color: var(--accent); color: var(--text); }
+    .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .pill.active.p-interested { background: var(--c-interested); border-color: var(--c-interested); }
+    .pill.active.p-viewing    { background: var(--c-viewing);    border-color: var(--c-viewing); color: #1a1d27; }
+    .pill.active.p-applied    { background: var(--c-applied);    border-color: var(--c-applied); }
+    .pill.active.p-rejected   { background: var(--c-rejected);   border-color: var(--c-rejected); }
+
+    .sort-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 10px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+      min-width: 130px;
+    }
+
+    .sort-select:focus { outline: none; border-color: var(--accent); }
+
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 18px;
+      gap: 16px;
     }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
+      border-left: 3px solid var(--border);
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      transition: border-color 0.15s;
+      gap: 11px;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .card:hover { border-color: var(--accent); }
+    .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-    }
+    .card.status-interested { border-left-color: var(--c-interested); }
+    .card.status-viewing    { border-left-color: var(--c-viewing); }
+    .card.status-applied    { border-left-color: var(--c-applied); }
+    .card.status-rejected   { border-left-color: var(--c-rejected); opacity: 0.75; }
 
-    .card-address {
-      font-size: 1rem;
-      font-weight: 600;
-      line-height: 1.3;
-      flex: 1;
-    }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .card-address { font-size: 0.97rem; font-weight: 600; line-height: 1.35; flex: 1; }
 
     .badge {
       display: inline-block;
-      padding: 3px 10px;
+      padding: 3px 9px;
       border-radius: 20px;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -207,31 +254,23 @@
       flex-shrink: 0;
     }
 
-    .badge-interested { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-    .badge-viewing    { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-    .badge-applied    { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-    .badge-rejected   { background: rgba(239,68,68,0.2);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-interested { background: rgba(59,130,246,0.18);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-viewing    { background: rgba(245,158,11,0.18);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-applied    { background: rgba(16,185,129,0.18);  color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-rejected   { background: rgba(239,68,68,0.18);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
 
-    .card-rent {
-      display: flex;
-      gap: 20px;
-    }
-
+    .card-rent { display: flex; gap: 18px; flex-wrap: wrap; }
     .rent-item { display: flex; flex-direction: column; }
-    .rent-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.4px; margin-bottom: 2px; }
-    .rent-value { font-size: 1.2rem; font-weight: 700; color: var(--text); }
-    .rent-value span { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+    .rent-label { font-size: 0.68rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.4px; margin-bottom: 2px; }
+    .rent-value { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .rent-value span { font-size: 0.73rem; font-weight: 400; color: var(--muted); }
 
-    .card-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
+    .card-meta { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+    .card-meta-row { display: flex; align-items: center; gap: 6px; }
+    .card-meta-row svg { opacity: 0.6; flex-shrink: 0; }
 
     .card-notes {
-      font-size: 0.83rem;
+      font-size: 0.81rem;
       color: var(--muted);
       background: var(--surface2);
       border-radius: 6px;
@@ -242,71 +281,71 @@
 
     .card-notes.has-notes { display: block; }
 
-    .card-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
-
-    .card-actions select {
-      flex: 1;
-      padding: 7px 10px;
-      font-size: 0.82rem;
-      min-width: 130px;
-    }
+    .card-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 2px; }
+    .card-actions-top { width: 100%; }
+    .card-actions-top select { width: 100%; padding: 7px 10px; font-size: 0.82rem; }
+    .card-actions-bottom { display: flex; gap: 6px; flex-wrap: wrap; }
 
     .btn-link {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--accent2);
       text-decoration: none;
-      padding: 7px 10px;
+      padding: 6px 10px;
       border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--surface2);
       transition: background 0.15s;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .btn-link:hover { background: var(--border); }
+    .btn-link svg { opacity: 0.7; }
 
     .btn-remove {
       background: rgba(239,68,68,0.1);
       color: #f87171;
       border: 1px solid rgba(239,68,68,0.2);
       border-radius: 6px;
-      padding: 7px 10px;
-      font-size: 0.8rem;
+      padding: 6px 10px;
+      font-size: 0.78rem;
       cursor: pointer;
       transition: background 0.15s;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
     }
 
-    .btn-remove:hover { background: rgba(239,68,68,0.2); }
+    .btn-remove:hover { background: rgba(239,68,68,0.22); }
+    .btn-remove svg { opacity: 0.8; }
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
       color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
 
-    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
-    .empty-state p { font-size: 0.95rem; }
+    .empty-state svg { opacity: 0.3; }
+    .empty-state p { font-size: 0.92rem; }
 
-    .loading {
-      text-align: center;
-      padding: 60px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
+    .loading { text-align: center; padding: 60px; color: var(--muted); font-size: 0.88rem; }
 
     @media (max-width: 600px) {
-      h1 { font-size: 1.3rem; }
-      .add-form { padding: 18px; }
+      h1 { font-size: 1.2rem; }
+      header { padding: 14px 16px 12px; }
+      main { padding: 18px 16px 0; }
+      .add-form { padding: 16px; }
       .form-grid { grid-template-columns: 1fr; }
       .cards-grid { grid-template-columns: 1fr; }
-      .card-rent { flex-wrap: wrap; gap: 12px; }
+      .filter-bar { gap: 6px; }
     }
   </style>
 </head>
@@ -314,17 +353,37 @@
 
 <header>
   <div class="header-inner">
-    <h1>🏠 Flat Tracker</h1>
-    <div class="stats-bar" id="stats-bar">
-      <div class="stat">Total <strong id="stat-total">—</strong></div>
-      <div class="stat">Avg rent <strong id="stat-avg-rent">—</strong></div>
-      <div class="stat">Avg per person <strong id="stat-avg-pp">—</strong></div>
+    <div class="header-top">
+      <h1>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6c63ff"/></linearGradient></defs>
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Flat Tracker
+      </h1>
+      <div class="rt-indicator">
+        <div class="rt-dot" id="rt-dot"></div>
+        <span id="rt-label">Connecting…</span>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        Listings <strong id="stat-total">—</strong>
+      </div>
+      <div class="stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Avg/mo <strong id="stat-avg-rent">—</strong>
+      </div>
+      <div class="stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Per person <strong id="stat-avg-pp">—</strong>
+      </div>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- Add Form -->
   <div class="add-form">
     <h2>Add new listing</h2>
     <div class="form-grid">
@@ -361,7 +420,21 @@
     <button class="btn-add" id="btn-add" onclick="addListing()">Add Listing</button>
   </div>
 
-  <!-- Cards -->
+  <div class="filter-bar">
+    <div class="filter-pills">
+      <button class="pill active" onclick="setFilter('all', this)">All</button>
+      <button class="pill p-interested" onclick="setFilter('interested', this)">Interested</button>
+      <button class="pill p-viewing"    onclick="setFilter('viewing', this)">Viewing</button>
+      <button class="pill p-applied"    onclick="setFilter('applied', this)">Applied</button>
+      <button class="pill p-rejected"   onclick="setFilter('rejected', this)">Rejected</button>
+    </div>
+    <select class="sort-select" id="sort-select" onchange="render()">
+      <option value="newest">Newest first</option>
+      <option value="rent-asc">Rent: low to high</option>
+      <option value="rent-desc">Rent: high to low</option>
+    </select>
+  </div>
+
   <div id="cards-container">
     <div class="loading">Loading listings…</div>
   </div>
@@ -372,7 +445,7 @@
   const SUPABASE_KEY = 'sb_publishable_eGSmV8QpCFQGQXfgnmI3eA_VNFrgWdB';
   const TABLE = 'flats';
 
-  const headers = {
+  const apiHeaders = {
     'Content-Type': 'application/json',
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -380,17 +453,59 @@
   };
 
   let listings = [];
+  let activeFilter = 'all';
+
+  function setFilter(status, btn) {
+    activeFilter = status;
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function getVisible() {
+    let out = activeFilter === 'all' ? [...listings] : listings.filter(l => l.status === activeFilter);
+    const sort = document.getElementById('sort-select').value;
+    if (sort === 'rent-asc')  out.sort((a,b) => a.monthly_rent - b.monthly_rent);
+    if (sort === 'rent-desc') out.sort((a,b) => b.monthly_rent - a.monthly_rent);
+    return out;
+  }
 
   async function fetchListings() {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?order=created_at.desc`, { headers });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?order=created_at.desc`, { headers: apiHeaders });
       if (!res.ok) throw new Error(await res.text());
       listings = await res.json();
       render();
     } catch (e) {
       document.getElementById('cards-container').innerHTML =
-        `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load listings: ${e.message}</p></div>`;
+        `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Could not load listings: ${escHtml(e.message)}</p></div>`;
     }
+  }
+
+  function connectRealtime() {
+    const dot = document.getElementById('rt-dot');
+    const label = document.getElementById('rt-label');
+    const wsUrl = SUPABASE_URL.replace('https://', 'wss://') + `/realtime/v1/websocket?apikey=${SUPABASE_KEY}&vsn=1.0.0`;
+    let ws, heartbeat;
+
+    function connect() {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        dot.className = 'rt-dot live';
+        label.textContent = 'Live';
+        ws.send(JSON.stringify({ topic: 'realtime:public:flats', event: 'phx_join', payload: { config: { broadcast: { self: false }, presence: { key: '' }, postgres_changes: [{ event: '*', schema: 'public', table: TABLE }] } }, ref: '1' }));
+        heartbeat = setInterval(() => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null })); }, 30000);
+      };
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.event === 'postgres_changes' || (msg.payload && msg.payload.data)) fetchListings();
+        } catch (_) {}
+      };
+      ws.onclose = () => { dot.className = 'rt-dot'; label.textContent = 'Reconnecting…'; clearInterval(heartbeat); setTimeout(connect, 3000); };
+      ws.onerror = () => { dot.className = 'rt-dot error'; label.textContent = 'Offline'; };
+    }
+    connect();
   }
 
   async function addListing() {
@@ -400,59 +515,35 @@
     const date    = document.getElementById('f-date').value;
     const status  = document.getElementById('f-status').value;
     const notes   = document.getElementById('f-notes').value.trim();
-
     if (!address) { alert('Address is required.'); return; }
     if (!rent || rent <= 0) { alert('Please enter a valid monthly rent.'); return; }
-
     const btn = document.getElementById('btn-add');
-    btn.textContent = 'Adding…';
-    btn.disabled = true;
-
+    btn.textContent = 'Adding…'; btn.disabled = true;
     try {
-      const body = { address, link: link || null, monthly_rent: rent, move_in_date: date || null, notes: notes || null, status };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body)
-      });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, { method: 'POST', headers: apiHeaders, body: JSON.stringify({ address, link: link||null, monthly_rent: rent, move_in_date: date||null, notes: notes||null, status }) });
       if (!res.ok) throw new Error(await res.text());
       const [created] = await res.json();
-      listings.unshift(created);
-      clearForm();
-      render();
-    } catch (e) {
-      alert('Failed to add listing: ' + e.message);
-    } finally {
-      btn.textContent = 'Add Listing';
-      btn.disabled = false;
-    }
+      listings.unshift(created); clearForm(); render();
+    } catch (e) { alert('Failed to add listing: ' + e.message); }
+    finally { btn.textContent = 'Add Listing'; btn.disabled = false; }
   }
 
   async function removeListing(id) {
     if (!confirm('Remove this listing?')) return;
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, { method: 'DELETE', headers: apiHeaders });
       if (!res.ok) throw new Error(await res.text());
-      listings = listings.filter(l => l.id !== id);
-      render();
-    } catch (e) {
-      alert('Failed to remove: ' + e.message);
-    }
+      listings = listings.filter(l => l.id !== id); render();
+    } catch (e) { alert('Failed to remove: ' + e.message); }
   }
 
   async function updateStatus(id, status) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ status })
-      });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`, { method: 'PATCH', headers: apiHeaders, body: JSON.stringify({ status }) });
       if (!res.ok) throw new Error(await res.text());
       const idx = listings.findIndex(l => l.id === id);
       if (idx !== -1) { listings[idx].status = status; render(); }
-    } catch (e) {
-      alert('Failed to update status: ' + e.message);
-    }
+    } catch (e) { alert('Failed to update status: ' + e.message); }
   }
 
   function clearForm() {
@@ -460,90 +551,71 @@
     document.getElementById('f-status').value = 'interested';
   }
 
-  function formatDate(d) {
-    if (!d) return null;
-    const [y,m,day] = d.split('-');
-    return `${day}/${m}/${y}`;
-  }
-
-  function badgeClass(status) {
-    const map = { interested: 'badge-interested', viewing: 'badge-viewing', applied: 'badge-applied', rejected: 'badge-rejected' };
-    return map[status] || 'badge-interested';
-  }
-
-  function badgeLabel(status) {
-    return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Interested';
-  }
+  function formatDate(d) { if (!d) return null; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+  function badgeClass(s) { return {interested:'badge-interested',viewing:'badge-viewing',applied:'badge-applied',rejected:'badge-rejected'}[s]||'badge-interested'; }
+  function badgeLabel(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : 'Interested'; }
 
   function renderStats() {
     const total = listings.length;
     document.getElementById('stat-total').textContent = total;
-    if (total === 0) {
-      document.getElementById('stat-avg-rent').textContent = '—';
-      document.getElementById('stat-avg-pp').textContent = '—';
-      return;
-    }
-    const avg = listings.reduce((s, l) => s + parseFloat(l.monthly_rent || 0), 0) / total;
-    document.getElementById('stat-avg-rent').textContent = `£${Math.round(avg).toLocaleString()}/mo`;
-    document.getElementById('stat-avg-pp').textContent = `£${Math.round(avg / 3).toLocaleString()}/mo`;
+    if (!total) { document.getElementById('stat-avg-rent').textContent='\u2014'; document.getElementById('stat-avg-pp').textContent='\u2014'; return; }
+    const avg = listings.reduce((s,l)=>s+parseFloat(l.monthly_rent||0),0)/total;
+    document.getElementById('stat-avg-rent').textContent=`\u00a3${Math.round(avg).toLocaleString()}`;
+    document.getElementById('stat-avg-pp').textContent=`\u00a3${Math.round(avg/3).toLocaleString()}`;
   }
 
-  function renderCard(l) {
-    const ppRent = (parseFloat(l.monthly_rent) / 3).toFixed(0);
-    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(l.address)}`;
-    const status = l.status || 'interested';
+  const SVG_MAP=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+  const SVG_LINK=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+  const SVG_TRASH=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+  const SVG_CAL=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 
+  function renderCard(l) {
+    const ppRent=Math.round(parseFloat(l.monthly_rent)/3);
+    const mapsUrl=`https://www.google.com/maps/search/${encodeURIComponent(l.address)}`;
+    const status=l.status||'interested';
     return `
-      <div class="card" id="card-${l.id}">
+      <div class="card status-${status}" id="card-${l.id}">
         <div class="card-header">
           <div class="card-address">${escHtml(l.address)}</div>
           <span class="badge ${badgeClass(status)}">${badgeLabel(status)}</span>
         </div>
         <div class="card-rent">
-          <div class="rent-item">
-            <span class="rent-label">Monthly</span>
-            <span class="rent-value">£${parseFloat(l.monthly_rent).toLocaleString()}<span>/mo</span></span>
-          </div>
-          <div class="rent-item">
-            <span class="rent-label">Per Person (÷3)</span>
-            <span class="rent-value">£${parseInt(ppRent).toLocaleString()}<span>/mo</span></span>
-          </div>
+          <div class="rent-item"><span class="rent-label">Monthly</span><span class="rent-value">£${parseFloat(l.monthly_rent).toLocaleString()}<span>/mo</span></span></div>
+          <div class="rent-item"><span class="rent-label">Per person ÷3</span><span class="rent-value">£${ppRent.toLocaleString()}<span>/mo</span></span></div>
         </div>
-        <div class="card-meta">
-          ${l.move_in_date ? `<span>📅 Available ${formatDate(l.move_in_date)}</span>` : ''}
-        </div>
-        ${l.notes ? `<div class="card-notes has-notes">${escHtml(l.notes)}</div>` : '<div class="card-notes"></div>'}
+        ${l.move_in_date?`<div class="card-meta"><div class="card-meta-row">${SVG_CAL} Available ${formatDate(l.move_in_date)}</div></div>`:''}
+        ${l.notes?`<div class="card-notes has-notes">${escHtml(l.notes)}</div>`:''}
         <div class="card-actions">
-          <select onchange="updateStatus('${l.id}', this.value)" aria-label="Status">
-            <option value="interested" ${status === 'interested' ? 'selected' : ''}>Interested</option>
-            <option value="viewing"    ${status === 'viewing'    ? 'selected' : ''}>Viewing</option>
-            <option value="applied"    ${status === 'applied'    ? 'selected' : ''}>Applied</option>
-            <option value="rejected"   ${status === 'rejected'   ? 'selected' : ''}>Rejected</option>
-          </select>
-          <a class="btn-link" href="${mapsUrl}" target="_blank" rel="noopener">Open in Maps →</a>
-          ${l.link ? `<a class="btn-link" href="${escHtml(l.link)}" target="_blank" rel="noopener">Listing ↗</a>` : ''}
-          <button class="btn-remove" onclick="removeListing('${l.id}')">Remove</button>
+          <div class="card-actions-top">
+            <select onchange="updateStatus('${l.id}', this.value)" aria-label="Status">
+              <option value="interested" ${status==='interested'?'selected':''}>Interested</option>
+              <option value="viewing"    ${status==='viewing'   ?'selected':''}>Viewing</option>
+              <option value="applied"    ${status==='applied'   ?'selected':''}>Applied</option>
+              <option value="rejected"   ${status==='rejected'  ?'selected':''}>Rejected</option>
+            </select>
+          </div>
+          <div class="card-actions-bottom">
+            <a class="btn-link" href="${mapsUrl}" target="_blank" rel="noopener">${SVG_MAP} Maps</a>
+            ${l.link?`<a class="btn-link" href="${escHtml(l.link)}" target="_blank" rel="noopener">${SVG_LINK} Listing</a>`:''}
+            <button class="btn-remove" onclick="removeListing('${l.id}')">${SVG_TRASH} Remove</button>
+          </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   function render() {
     renderStats();
-    const container = document.getElementById('cards-container');
-    if (listings.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="icon">🏠</div><p>No listings yet — add one above.</p></div>`;
-      return;
-    }
-    container.innerHTML = `<div class="cards-grid">${listings.map(renderCard).join('')}</div>`;
+    const container=document.getElementById('cards-container');
+    const visible=getVisible();
+    if (!listings.length) { container.innerHTML=`<div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><p>No listings yet — add one above.</p></div>`; return; }
+    if (!visible.length) { container.innerHTML=`<div class="empty-state"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No listings match this filter.</p></div>`; return; }
+    container.innerHTML=`<div class="cards-grid">${visible.map(renderCard).join('')}</div>`;
   }
 
-  function escHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  function escHtml(str) { if(!str)return''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   fetchListings();
+  connectRealtime();
 </script>
 </body>
 </html>
