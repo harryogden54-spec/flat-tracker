@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flat Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    [data-theme="dark"]  { --bg:#0f0f13; --surface:#1a1a22; --border:#2a2a35; --text:#e8e8f0; --muted:#7878a0; --accent:#7c6ee0; }
+    [data-theme="light"] { --bg:#f5f5f0; --surface:#ffffff; --border:#e0e0da; --text:#1a1a1a; --muted:#888888; --accent:#3b6ef0; }
+    [data-theme="dusk"]  { --bg:#1a1020; --surface:#251830; --border:#352545; --text:#f0e8ff; --muted:#9980bb; --accent:#c87dd4; }
+    [data-theme="ocean"] { --bg:#0a1628; --surface:#0f2040; --border:#1a3060; --text:#d0e8ff; --muted:#7099bb; --accent:#4da8d4; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+    .container { max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .header h1 { font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .swatches { display: flex; gap: 6px; align-items: center; }
+    .swatch { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s; }
+    .swatch:hover { transform: scale(1.2); }
+    .swatch.active { border-color: var(--text); }
+    .sw-dark  { background: #1a1a22; box-shadow: inset 0 0 0 1px #555; }
+    .sw-light { background: #f5f5f0; box-shadow: inset 0 0 0 1px #ccc; }
+    .sw-dusk  { background: #c87dd4; }
+    .sw-ocean { background: #4da8d4; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 22px; font-weight: 600; }
+
+    /* Add form */
+    .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .section-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
+    input, textarea, select {
+      width: 100%; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; font-size: 13px; font-family: inherit;
+      background: var(--bg); color: var(--text); transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    .btn { border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--text); }
+    .btn:hover { border-color: var(--muted); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { opacity: 0.85; border-color: var(--accent); }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .btn-ghost:hover { color: #ef4444; border-color: #ef4444; }
+    .btn-edit { background: transparent; color: var(--muted); }
+    .btn-edit:hover { color: var(--accent); border-color: var(--accent); }
+    .msg { font-size: 12px; }
+    .msg-ok  { color: #10b981; }
+    .msg-err { color: #ef4444; }
+    .autofill-msg { font-size: 11px; color: #10b981; display: block; margin-top: 3px; min-height: 15px; }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .view-tabs { display: flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; flex-shrink: 0; }
+    .view-tab { padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--muted); display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .view-tab.active { background: var(--accent); color: #fff; }
+    .filter-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+    .pill { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--muted); transition: all 0.15s; }
+    .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .sort-select { padding: 5px 10px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); margin-left: auto; }
+
+    /* Cards */
+    .flats { display: flex; flex-direction: column; gap: 10px; }
+    .flat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.1rem 1.1rem 1.1rem 1rem;
+      border-left: 4px solid var(--border);
+    }
+    .flat-card[data-status="interested"] { border-left-color: #3b82f6; }
+    .flat-card[data-status="viewing"]    { border-left-color: #f59e0b; }
+    .flat-card[data-status="applied"]    { border-left-color: #10b981; }
+    .flat-card[data-status="rejected"]   { border-left-color: #ef4444; }
+    .flat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .flat-address { font-size: 15px; font-weight: 600; }
+    .flat-listing-link { font-size: 12px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; margin-top: 3px; }
+    .flat-listing-link:hover { opacity: 0.75; }
+    .flat-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
+    .meta-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .meta-value { font-size: 13px; font-weight: 500; }
+    .meta-link { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 500; }
+    .meta-link:hover { opacity: 0.75; }
+    .status-ts { font-size: 10px; color: var(--muted); margin-top: 3px; text-align: right; }
+
+    /* Collapsible notes */
+    .flat-notes-section { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 6px; }
+    .notes-toggle { font-size: 12px; color: var(--muted); cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; display: inline-flex; align-items: center; gap: 4px; }
+    .notes-toggle:hover { color: var(--text); }
+    .notes-chevron { transition: transform 0.2s; flex-shrink: 0; }
+    .notes-body { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+    /* Footer */
+    .flat-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+    .footer-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .footer-right { display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+    .badge-interested { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+    .badge-viewing    { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+    .badge-applied    { background: rgba(16,185,129,0.15);  color: #10b981; }
+    .badge-rejected   { background: rgba(239,68,68,0.15);   color: #ef4444; }
+    .status-select { width: auto; font-size: 12px; padding: 4px 8px; }
+    .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
+
+    /* Compare button on cards */
+    .btn-compare { font-size: 11px; padding: 4px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
+    .btn-compare:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-compare.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Compare panel */
+    .compare-panel { background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+
+    /* Edit modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; margin: 1rem; }
+    .modal-title { font-size: 14px; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 7px; }
+
+    /* Map */
+    #map-wrap { display: none; }
+    #map { height: 500px; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important; color: var(--text) !important;
+      border: 1px solid var(--border) !important; border-radius: 10px !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .popup-addr { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .popup-rent { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .popup-link { font-size: 12px; color: var(--accent); text-decoration: none; }
+    .popup-link:hover { opacity: 0.75; }
+
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .flat-meta { grid-template-columns: 1fr 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      .sort-select { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit flat
+    </div>
+    <div class="form-grid">
+      <div><label>Address</label><input id="e-addr" placeholder="12 Marchmont St, EH9" /></div>
+      <div><label>Listing URL</label><input id="e-link" type="url" placeholder="https://rightmove.co.uk/..." /></div>
+    </div>
+    <div class="form-grid">
+      <div><label>Monthly rent (£)</label><input id="e-rent" type="number" placeholder="1800" /></div>
+      <div><label>Move-in date</label><input id="e-date" type="date" /></div>
+    </div>
+    <div style="margin-bottom:10px"><label>Notes</label><textarea id="e-notes" rows="3" placeholder="Pros, cons, things to check..."></textarea></div>
+    <div style="margin-bottom:1.25rem">
+      <label>Status</label>
+      <select id="e-status">
+        <option value="interested">Interested</option>
+        <option value="viewing">Viewing</option>
+        <option value="applied">Applied</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <span class="msg" id="edit-msg"></span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Flat Tracker
+    </h1>
+    <div class="swatches">
+      <div class="swatch sw-dark"  title="Dark"  onclick="setTheme('dark')"></div>
+      <div class="swatch sw-light" title="Light" onclick="setTheme('light')"></div>
+      <div class="swatch sw-dusk"  title="Dusk"  onclick="setTheme('dusk')"></div>
+      <div class="swatch sw-ocean" title="Ocean" onclick="setTheme('ocean')"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Listings</div><div class="stat-value" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-label">Avg rent / mo</div><div class="stat-value" id="s-avg">—</div></div>
+    <div class="stat"><div class="stat-label">Per person (÷3)</div><div class="stat-value" id="s-pp">—</div></div>
+  </div>
+
+  <!-- Add form -->
+  <div class="add-form">
+    <div class="section-label">Add a flat</div>
+    <div class="form-grid">
+      <div><label>Address</label><input id="f-addr" placeholder="12 Marchmont St, EH9" /></div>
+      <div>
+        <label>Listing URL</label>
+        <input id="f-link" type="url" placeholder="https://rightmove.co.uk/..." />
+        <span class="autofill-msg" id="autofill-msg"></span>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div><label>Monthly rent (£)</label><input id="f-rent" type="number" placeholder="1800" /></div>
+      <div><label>Move-in date</label><input id="f-date" type="date" /></div>
+    </div>
+    <div style="margin-bottom:10px"><label>Notes</label><textarea id="f-notes" rows="2" placeholder="Pros, cons, things to check..."></textarea></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="addFlat()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add flat
+      </button>
+      <span class="msg" id="add-msg"></span>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-cards" onclick="switchView('cards')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Cards
+      </button>
+      <button class="view-tab" id="tab-map" onclick="switchView('map')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Map
+      </button>
+    </div>
+    <div class="filter-pills">
+      <button class="pill active" data-filter="all"        onclick="setFilter('all')">All</button>
+      <button class="pill"        data-filter="interested" onclick="setFilter('interested')">Interested</button>
+      <button class="pill"        data-filter="viewing"    onclick="setFilter('viewing')">Viewing</button>
+      <button class="pill"        data-filter="applied"    onclick="setFilter('applied')">Applied</button>
+      <button class="pill"        data-filter="rejected"   onclick="setFilter('rejected')">Rejected</button>
+    </div>
+    <select class="sort-select" onchange="setSort(this.value)">
+      <option value="newest">Newest first</option>
+      <option value="rent-asc">Rent: low to high</option>
+      <option value="rent-desc">Rent: high to low</option>
+    </select>
+  </div>
+
+  <!-- Cards view -->
+  <div id="cards-wrap">
+    <div class="flats" id="flats-list"><div class="empty">No flats added yet.</div></div>
+  </div>
+
+  <!-- Map view -->
+  <div id="map-wrap">
+    <div id="map"></div>
+  </div>
+
+</div>
+<script>
+// ─── Config ───────────────────────────────────────────────────
+const SUPA  = 'https://llszaawcnawztybbxhtm.supabase.co';
+const KEY   = 'sb_publishable_eGSmV8QpCFQGQXfgnmI3eA_VNFrgWdB';
+const HEADS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+// ─── State ────────────────────────────────────────────────────
+let flats      = [];
+let filter     = 'all';
+let sort       = 'newest';
+let view       = 'cards';
+let map        = null;
+let tile       = null;
+let markers    = [];
+let compareSet = new Set();
+
+// ─── Theme ────────────────────────────────────────────────────
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('ft-theme', t);
+  document.querySelectorAll('.swatch').forEach(s =>
+    s.classList.toggle('active', s.title.toLowerCase() === t)
+  );
+  if (map && tile) {
+    map.removeLayer(tile);
+    tile = L.tileLayer(tileUrl(t), { attribution: '&copy; <a href="https://carto.com">CartoDB</a>' }).addTo(map);
+  }
+}
+
+function tileUrl(t) {
+  return ['dark', 'dusk', 'ocean'].includes(t)
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+}
+
+(function initTheme() {
+  const t = localStorage.getItem('ft-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.swatch').forEach(s =>
+    s.classList.toggle('active', s.title.toLowerCase() === t)
+  );
+})();
+
+// ─── Fetch ────────────────────────────────────────────────────
+async function fetchListings() {
+  try {
+    const r = await fetch(SUPA + '/rest/v1/flats?order=created_at.desc', { headers: HEADS });
+    const data = await r.json();
+    flats = Array.isArray(data) ? data : [];
+  } catch { flats = []; }
+  render();
+  updateStats();
+  if (view === 'map') updateMarkers();
+}
+
+// ─── Add ──────────────────────────────────────────────────────
+async function addFlat() {
+  const addr  = document.getElementById('f-addr').value.trim();
+  const link  = document.getElementById('f-link').value.trim();
+  const rent  = parseFloat(document.getElementById('f-rent').value) || null;
+  const date  = document.getElementById('f-date').value  || null;
+  const notes = document.getElementById('f-notes').value.trim() || null;
+  const msgEl = document.getElementById('add-msg');
+
+  if (!addr) { setMsg(msgEl, 'Address required', 'err'); return; }
+
+  setMsg(msgEl, 'Geocoding…', 'ok');
+  const coords = await geocode(addr);
+
+  const body = {
+    address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes,
+    status_history: [{ status: 'interested', timestamp: new Date().toISOString() }]
+  };
+  if (coords) { body.lat = coords.lat; body.lng = coords.lng; }
+
+  const r = await fetch(SUPA + '/rest/v1/flats', { method: 'POST', headers: HEADS, body: JSON.stringify(body) });
+  if (r.ok) {
+    ['f-addr', 'f-link', 'f-rent', 'f-date', 'f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('autofill-msg').textContent = '';
+    setMsg(msgEl, 'Added!', 'ok');
+    setTimeout(() => { msgEl.textContent = ''; }, 2000);
+    fetchListings();
+  } else {
+    setMsg(msgEl, 'Error — try again', 'err');
+  }
+}
+
+async function removeFlat(id) {
+  if (!confirm('Remove this flat?')) return;
+  compareSet.delete(id);
+  await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, { method: 'DELETE', headers: HEADS });
+  fetchListings();
+}
+
+async function setStatus(id, status) {
+  const flat = flats.find(x => x.id === id);
+  if (!flat || (flat.status || 'interested') === status) return;
+  const hist = Array.isArray(flat.status_history) ? [...flat.status_history] : [];
+  hist.push({ status, timestamp: new Date().toISOString() });
+  await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, {
+    method: 'PATCH', headers: HEADS,
+    body: JSON.stringify({ status, status_history: hist })
+  });
+  fetchListings();
+}
+
+// ─── Edit ─────────────────────────────────────────────────────
+let editingId       = null;
+let editingOrigAddr = null;
+
+function openEditModal(id) {
+  const f = flats.find(x => x.id === id);
+  if (!f) return;
+  editingId       = id;
+  editingOrigAddr = f.address;
+  document.getElementById('e-addr').value   = f.address || '';
+  document.getElementById('e-link').value   = f.link || '';
+  document.getElementById('e-rent').value   = f.monthly_rent || '';
+  document.getElementById('e-date').value   = f.move_in_date || '';
+  document.getElementById('e-notes').value  = f.notes || '';
+  document.getElementById('e-status').value = f.status || 'interested';
+  document.getElementById('edit-msg').textContent = '';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId       = null;
+  editingOrigAddr = null;
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+  const msgEl = document.getElementById('edit-msg');
+  const addr  = document.getElementById('e-addr').value.trim();
+  const link  = document.getElementById('e-link').value.trim();
+  const rent  = parseFloat(document.getElementById('e-rent').value) || null;
+  const date  = document.getElementById('e-date').value || null;
+  const notes = document.getElementById('e-notes').value.trim() || null;
+  const newSt = document.getElementById('e-status').value;
+
+  if (!addr) { setMsg(msgEl, 'Address required', 'err'); return; }
+
+  const flat  = flats.find(x => x.id === editingId);
+  const oldSt = flat ? (flat.status || 'interested') : 'interested';
+  const body  = { address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes };
+
+  if (newSt !== oldSt) {
+    body.status = newSt;
+    const hist = flat && Array.isArray(flat.status_history) ? [...flat.status_history] : [];
+    hist.push({ status: newSt, timestamp: new Date().toISOString() });
+    body.status_history = hist;
+  }
+
+  if (addr !== editingOrigAddr) {
+    setMsg(msgEl, 'Geocoding…', 'ok');
+    const coords = await geocode(addr);
+    if (coords) { body.lat = coords.lat; body.lng = coords.lng; }
+  }
+
+  setMsg(msgEl, 'Saving…', 'ok');
+  const r = await fetch(SUPA + '/rest/v1/flats?id=eq.' + editingId, {
+    method: 'PATCH', headers: HEADS, body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    closeEditModal();
+    fetchListings();
+  } else {
+    setMsg(msgEl, 'Error — try again', 'err');
+  }
+}
+
+// ─── Geocode ──────────────────────────────────────────────────
+async function geocode(address) {
+  try {
+    const q = encodeURIComponent(address + ', Edinburgh, UK');
+    const r = await fetch(
+      'https://nominatim.openstreetmap.org/search?q=' + q + '&format=json&limit=1&countrycodes=gb',
+      { headers: { 'User-Agent': 'FlatTracker/1.0' } }
+    );
+    const data = await r.json();
+    if (data.length) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {}
+  return null;
+}
+
+// ─── Realtime ─────────────────────────────────────────────────
+let ws, heartbeat;
+function connectRealtime() {
+  const url = SUPA.replace('https://', 'wss://') + '/realtime/v1/websocket?apikey=' + KEY + '&vsn=1.0.0';
+  ws = new WebSocket(url);
+  let ref = 0;
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ topic: 'realtime:public:flats', event: 'phx_join', payload: {}, ref: String(++ref) }));
+    heartbeat = setInterval(() => {
+      ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++ref) }));
+    }, 30000);
+  };
+
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.event === 'postgres_changes' || (msg.payload && msg.payload.data)) fetchListings();
+    } catch {}
+  };
+
+  ws.onclose = () => { clearInterval(heartbeat); setTimeout(connectRealtime, 5000); };
+  ws.onerror = () => ws.close();
+}
+
+// ─── Compare ──────────────────────────────────────────────────
+function toggleCompare(id) {
+  if (compareSet.has(id)) {
+    compareSet.delete(id);
+  } else {
+    if (compareSet.size >= 3) return;
+    compareSet.add(id);
+  }
+  render();
+}
+
+function clearCompare() {
+  compareSet.clear();
+  render();
+}
+
+function renderCompare() {
+  let panel = document.getElementById('compare-panel');
+  if (compareSet.size < 2) {
+    if (panel) panel.style.display = 'none';
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'compare-panel';
+    panel.className = 'compare-panel';
+    document.getElementById('cards-wrap').appendChild(panel);
+  }
+  panel.style.display = '';
+
+  const selected = flats.filter(f => compareSet.has(f.id));
+  const rows = [
+    { label: 'Rent',       fn: f => fmt(f.monthly_rent) },
+    { label: 'Per person', fn: f => f.monthly_rent ? '£' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') : '—' },
+    { label: 'Move-in',   fn: f => fmtD(f.move_in_date) },
+    { label: 'Status',    fn: f => `<span class="badge badge-${f.status||'interested'}">${f.status||'interested'}</span>` },
+    { label: 'Notes',     fn: f => f.notes ? esc(f.notes) : '<span style="color:var(--muted)">—</span>' },
+  ];
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:600">Comparing ${selected.length} flat${selected.length > 1 ? 's' : ''}</div>
+      <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px" onclick="clearCompare()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear
+      </button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:6px 8px 8px;color:var(--muted);font-size:11px;font-weight:600;border-bottom:2px solid var(--accent);width:90px"></th>
+            ${selected.map(f => `<th style="text-align:left;padding:6px 8px 8px;font-weight:600;border-bottom:2px solid var(--accent);font-size:13px">${esc(f.address)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td style="color:var(--muted);font-size:11px;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap">${row.label}</td>
+              ${selected.map(f => `<td style="padding:7px 8px;border-bottom:1px solid var(--border)">${row.fn(f)}</td>`).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── URL paste-parse (Feature 5) ──────────────────────────────
+document.getElementById('f-link').addEventListener('paste', function() {
+  setTimeout(async () => {
+    const url = document.getElementById('f-link').value.trim();
+    if (!url.includes('rightmove.co.uk') && !url.includes('zoopla.co.uk')) return;
+    await parseListing(url);
+  }, 50);
+});
+
+async function parseListing(url) {
+  try {
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const r = await fetch(proxyUrl);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.contents) return;
+
+    const doc = new DOMParser().parseFromString(data.contents, 'text/html');
+    let rent = null, addr = null;
+
+    if (url.includes('rightmove.co.uk')) {
+      const priceEl = doc.querySelector('[data-test="price-qualifier"]') ||
+                      doc.querySelector('.propertyHeaderPrice') ||
+                      doc.querySelector('[class*="price"]');
+      if (priceEl) {
+        const m = priceEl.textContent.replace(/,/g, '').match(/\d+/);
+        if (m) rent = parseInt(m[0], 10);
+      }
+      const addrEl = doc.querySelector('[data-test="address-label"]') ||
+                     doc.querySelector('[class*="address"]') ||
+                     doc.querySelector('h1');
+      if (addrEl) addr = addrEl.textContent.trim();
+    } else if (url.includes('zoopla.co.uk')) {
+      const priceEl = doc.querySelector('[data-testid="price"]') ||
+                      doc.querySelector('[data-testid="listing-price"]') ||
+                      doc.querySelector('[class*="Price"]');
+      if (priceEl) {
+        const m = priceEl.textContent.replace(/,/g, '').match(/\d+/);
+        if (m) rent = parseInt(m[0], 10);
+      }
+      const addrEl = doc.querySelector('[data-testid="address"]') ||
+                     doc.querySelector('address') ||
+                     doc.querySelector('h1');
+      if (addrEl) addr = addrEl.textContent.trim();
+    }
+
+    let autofilled = false;
+    if (rent && !document.getElementById('f-rent').value) {
+      document.getElementById('f-rent').value = rent;
+      autofilled = true;
+    }
+    if (addr && !document.getElementById('f-addr').value) {
+      document.getElementById('f-addr').value = addr;
+      autofilled = true;
+    }
+    if (autofilled) {
+      const msgEl = document.getElementById('autofill-msg');
+      msgEl.textContent = 'Autofilled from listing';
+      setTimeout(() => { msgEl.textContent = ''; }, 3000);
+    }
+  } catch {
+    // fail silently
+  }
+}
+
+// ─── Filter / Sort / View ─────────────────────────────────────
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
+  render();
+  if (view === 'map') updateMarkers();
+}
+
+function setSort(s) {
+  sort = s;
+  render();
+  if (view === 'map') updateMarkers();
+}
+
+function switchView(v) {
+  view = v;
+  document.getElementById('tab-cards').classList.toggle('active', v === 'cards');
+  document.getElementById('tab-map').classList.toggle('active',   v === 'map');
+  document.getElementById('cards-wrap').style.display = v === 'cards' ? '' : 'none';
+  document.getElementById('map-wrap').style.display   = v === 'map'   ? 'block' : 'none';
+  if (v === 'map') initMap();
+}
+
+function visible() {
+  let list = filter === 'all' ? [...flats] : flats.filter(f => (f.status || 'interested') === filter);
+  if (sort === 'rent-asc')  list.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
+  if (sort === 'rent-desc') list.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
+  return list;
+}
+
+// ─── Render ───────────────────────────────────────────────────
+function fmt(n)   { return n ? '£' + Math.round(n).toLocaleString('en-GB') : '—'; }
+function fmtD(d)  { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function gmaps(a) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a); }
+function esc(s)   { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtStatusTs(history, currentStatus) {
+  if (!Array.isArray(history) || !history.length) return null;
+  const entries = history.filter(h => h.status === currentStatus);
+  if (!entries.length) return null;
+  const d = new Date(entries[entries.length - 1].timestamp);
+  if (isNaN(d)) return null;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function toggleNotes(btn) {
+  const body = btn.nextElementSibling;
+  body.hidden = !body.hidden;
+  btn.querySelector('.notes-chevron').style.transform = body.hidden ? '' : 'rotate(180deg)';
+}
+
+function render() {
+  const el   = document.getElementById('flats-list');
+  const list = visible();
+  if (!list.length) { el.innerHTML = '<div class="empty">No flats to show.</div>'; renderCompare(); return; }
+  el.innerHTML = list.map(f => {
+    const st  = f.status || 'interested';
+    const ts  = fmtStatusTs(f.status_history, st);
+    const cmp = compareSet.has(f.id);
+    return `
+<div class="flat-card" data-status="${st}">
+  <div class="flat-top">
+    <div>
+      <div class="flat-address">${esc(f.address)}</div>
+      ${f.link ? `<a class="flat-listing-link" href="${esc(f.link)}" target="_blank" rel="noopener">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View listing
+      </a>` : ''}
+    </div>
+    <div style="text-align:right;flex-shrink:0;margin-left:10px">
+      <span class="badge badge-${st}">${st}</span>
+      ${ts ? `<div class="status-ts">${st.charAt(0).toUpperCase() + st.slice(1)} since ${ts}</div>` : ''}
+    </div>
+  </div>
+  <div class="flat-meta">
+    <div><div class="meta-label">Monthly rent</div><div class="meta-value">${fmt(f.monthly_rent)}</div></div>
+    <div><div class="meta-label">Per person (÷3)</div><div class="meta-value">${f.monthly_rent ? '£' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') : '—'}</div></div>
+    <div><div class="meta-label">Move-in</div><div class="meta-value">${fmtD(f.move_in_date)}</div></div>
+    <div><div class="meta-label">Map</div><div class="meta-value">
+      <a class="meta-link" href="${gmaps(f.address)}" target="_blank" rel="noopener">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Open
+      </a>
+    </div></div>
+  </div>
+  ${f.notes ? `
+  <div class="flat-notes-section">
+    <button class="notes-toggle" onclick="toggleNotes(this)">
+      <svg class="notes-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      Notes
+    </button>
+    <div class="notes-body" hidden>${esc(f.notes)}</div>
+  </div>` : ''}
+  <div class="flat-footer">
+    <div class="footer-left">
+      <select class="status-select" onchange="setStatus('${f.id}', this.value)">
+        <option value="interested" ${st === 'interested' ? 'selected' : ''}>Interested</option>
+        <option value="viewing"    ${st === 'viewing'    ? 'selected' : ''}>Viewing</option>
+        <option value="applied"    ${st === 'applied'    ? 'selected' : ''}>Applied</option>
+        <option value="rejected"   ${st === 'rejected'   ? 'selected' : ''}>Rejected</option>
+      </select>
+      <button class="btn-compare${cmp ? ' selected' : ''}" onclick="toggleCompare('${f.id}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="14"/><rect x="14" y="7" width="7" height="10"/></svg>
+        ${cmp ? 'Selected' : 'Compare'}
+      </button>
+    </div>
+    <div class="footer-right">
+      <button class="btn btn-edit" onclick="openEditModal('${f.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+      <button class="btn btn-ghost" onclick="removeFlat('${f.id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Remove
+      </button>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+  renderCompare();
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = flats.length;
+  const rents = flats.filter(f => f.monthly_rent).map(f => f.monthly_rent);
+  if (rents.length) {
+    const avg = rents.reduce((a, b) => a + b, 0) / rents.length;
+    document.getElementById('s-avg').textContent = '£' + Math.round(avg).toLocaleString('en-GB');
+    document.getElementById('s-pp').textContent  = '£' + Math.round(avg / 3).toLocaleString('en-GB');
+  } else {
+    document.getElementById('s-avg').textContent = '—';
+    document.getElementById('s-pp').textContent  = '—';
+  }
+}
+
+function setMsg(el, text, type) {
+  el.textContent = text;
+  el.className = 'msg msg-' + (type === 'ok' ? 'ok' : 'err');
+}
+
+// ─── Map ──────────────────────────────────────────────────────
+const STATUS_COLORS = { interested: '#3b82f6', viewing: '#f59e0b', applied: '#10b981', rejected: '#ef4444' };
+
+function makeMarkerIcon(status) {
+  const c = STATUS_COLORS[status] || STATUS_COLORS.interested;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">
+    <path d="M13 0C5.82 0 0 5.82 0 13c0 8.66 13 21 13 21S26 21.66 26 13C26 5.82 20.18 0 13 0z"
+      fill="${c}" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+    <circle cx="13" cy="13" r="4.5" fill="white" opacity="0.9"/>
+  </svg>`;
+  return L.divIcon({ html: svg, className: '', iconSize: [26, 34], iconAnchor: [13, 34], popupAnchor: [0, -36] });
+}
+
+function initMap() {
+  if (map) { updateMarkers(); return; }
+  map = L.map('map').setView([55.9533, -3.1883], 13);
+  const t = document.documentElement.getAttribute('data-theme') || 'dark';
+  tile = L.tileLayer(tileUrl(t), { attribution: '&copy; <a href="https://carto.com">CartoDB</a>' }).addTo(map);
+  setTimeout(() => { map.invalidateSize(); updateMarkers(); }, 50);
+}
+
+function updateMarkers() {
+  if (!map) return;
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const list = visible().filter(f => f.lat && f.lng);
+  list.forEach(f => {
+    const st = f.status || 'interested';
+    const m  = L.marker([f.lat, f.lng], { icon: makeMarkerIcon(st) });
+    m.bindPopup(
+      `<div class="popup-addr">${esc(f.address)}</div>` +
+      `<div class="popup-rent">${fmt(f.monthly_rent)}${f.monthly_rent ? ' &middot; £' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') + '/person' : ''}</div>` +
+      `<span class="badge badge-${st}">${st}</span>` +
+      (f.link ? `<div style="margin-top:7px"><a class="popup-link" href="${esc(f.link)}" target="_blank" rel="noopener">View listing &rarr;</a></div>` : '')
+    );
+    m.addTo(map);
+    markers.push(m);
+  });
+  if (list.length) {
+    map.fitBounds(L.latLngBounds(list.map(f => [f.lat, f.lng])), { padding: [48, 48], maxZoom: 15 });
+  }
+}
+
+// ─── Boot ─────────────────────────────────────────────────────
+fetchListings();
+connectRealtime();
+</script>
+</body>
+</html>
