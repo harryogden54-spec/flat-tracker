@@ -97,6 +97,13 @@
     .notes-chevron { transition: transform 0.2s; flex-shrink: 0; }
     .notes-body { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
 
+    /* Star rating */
+    .flat-rating { display: flex; gap: 1px; align-items: center; }
+    .star { font-size: 17px; cursor: pointer; color: var(--border); transition: color 0.1s; line-height: 1; }
+    .star.filled { color: #f59e0b; }
+    .flat-rating:hover .star { color: #f59e0b; }
+    .flat-rating .star:hover ~ .star { color: var(--border); }
+
     /* Footer */
     .flat-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
     .footer-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -250,6 +257,7 @@
       <option value="newest">Newest first</option>
       <option value="rent-asc">Rent: low to high</option>
       <option value="rent-desc">Rent: high to low</option>
+      <option value="rating-desc">Rating: high to low</option>
     </select>
   </div>
 
@@ -511,6 +519,7 @@ function renderCompare() {
     { label: 'Per person', fn: f => f.monthly_rent ? '£' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') : '—' },
     { label: 'Move-in',   fn: f => fmtD(f.move_in_date) },
     { label: 'Status',    fn: f => `<span class="badge badge-${f.status||'interested'}">${f.status||'interested'}</span>` },
+    { label: 'Rating',    fn: f => f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating) : '—' },
     { label: 'Notes',     fn: f => f.notes ? esc(f.notes) : '<span style="color:var(--muted)">—</span>' },
   ];
 
@@ -631,8 +640,9 @@ function switchView(v) {
 
 function visible() {
   let list = filter === 'all' ? [...flats] : flats.filter(f => (f.status || 'interested') === filter);
-  if (sort === 'rent-asc')  list.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
-  if (sort === 'rent-desc') list.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
+  if (sort === 'rent-asc')    list.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
+  if (sort === 'rent-desc')   list.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
+  if (sort === 'rating-desc') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   return list;
 }
 
@@ -690,6 +700,9 @@ function render() {
         Open
       </a>
     </div></div>
+  </div>
+  <div class="flat-rating" style="margin:8px 0 4px">
+    ${[1,2,3,4,5].map(i => `<span class="star${(f.rating||0)>=i?' filled':''}" onclick="setRating('${f.id}',${(f.rating||0)===i?0:i})">&#9733;</span>`).join('')}
   </div>
   ${f.notes ? `
   <div class="flat-notes-section">
@@ -787,6 +800,15 @@ function updateMarkers() {
   if (list.length) {
     map.fitBounds(L.latLngBounds(list.map(f => [f.lat, f.lng])), { padding: [48, 48], maxZoom: 15 });
   }
+}
+
+// ─── Rating ───────────────────────────────────────────────────
+async function setRating(id, rating) {
+  await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, {
+    method: 'PATCH', headers: HEADS,
+    body: JSON.stringify({ rating: rating || null })
+  });
+  fetchListings();
 }
 
 // ─── Boot ─────────────────────────────────────────────────────
