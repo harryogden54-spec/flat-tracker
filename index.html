@@ -45,14 +45,18 @@
       background: var(--bg); color: var(--text); transition: border-color 0.15s;
     }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
-    .btn { border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn { border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--text); }
+    .btn:hover { border-color: var(--muted); }
     .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:hover { opacity: 0.85; border-color: var(--accent); }
     .btn-ghost { background: transparent; color: var(--muted); }
     .btn-ghost:hover { color: #ef4444; border-color: #ef4444; }
+    .btn-edit { background: transparent; color: var(--muted); }
+    .btn-edit:hover { color: var(--accent); border-color: var(--accent); }
     .msg { font-size: 12px; }
     .msg-ok  { color: #10b981; }
     .msg-err { color: #ef4444; }
+    .autofill-msg { font-size: 11px; color: #10b981; display: block; margin-top: 3px; min-height: 15px; }
 
     /* Toolbar */
     .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
@@ -84,8 +88,19 @@
     .meta-value { font-size: 13px; font-weight: 500; }
     .meta-link { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 500; }
     .meta-link:hover { opacity: 0.75; }
-    .flat-notes { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 9px; margin-top: 4px; line-height: 1.5; }
-    .flat-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .status-ts { font-size: 10px; color: var(--muted); margin-top: 3px; text-align: right; }
+
+    /* Collapsible notes */
+    .flat-notes-section { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 6px; }
+    .notes-toggle { font-size: 12px; color: var(--muted); cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; display: inline-flex; align-items: center; gap: 4px; }
+    .notes-toggle:hover { color: var(--text); }
+    .notes-chevron { transition: transform 0.2s; flex-shrink: 0; }
+    .notes-body { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+    /* Footer */
+    .flat-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+    .footer-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .footer-right { display: flex; align-items: center; gap: 6px; }
     .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
     .badge-interested { background: rgba(59,130,246,0.15);  color: #3b82f6; }
     .badge-viewing    { background: rgba(245,158,11,0.15);  color: #f59e0b; }
@@ -93,6 +108,19 @@
     .badge-rejected   { background: rgba(239,68,68,0.15);   color: #ef4444; }
     .status-select { width: auto; font-size: 12px; padding: 4px 8px; }
     .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
+
+    /* Compare button on cards */
+    .btn-compare { font-size: 11px; padding: 4px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
+    .btn-compare:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-compare.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Compare panel */
+    .compare-panel { background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+
+    /* Edit modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; margin: 1rem; }
+    .modal-title { font-size: 14px; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 7px; }
 
     /* Map */
     #map-wrap { display: none; }
@@ -117,6 +145,40 @@
   </style>
 </head>
 <body>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit flat
+    </div>
+    <div class="form-grid">
+      <div><label>Address</label><input id="e-addr" placeholder="12 Marchmont St, EH9" /></div>
+      <div><label>Listing URL</label><input id="e-link" type="url" placeholder="https://rightmove.co.uk/..." /></div>
+    </div>
+    <div class="form-grid">
+      <div><label>Monthly rent (£)</label><input id="e-rent" type="number" placeholder="1800" /></div>
+      <div><label>Move-in date</label><input id="e-date" type="date" /></div>
+    </div>
+    <div style="margin-bottom:10px"><label>Notes</label><textarea id="e-notes" rows="3" placeholder="Pros, cons, things to check..."></textarea></div>
+    <div style="margin-bottom:1.25rem">
+      <label>Status</label>
+      <select id="e-status">
+        <option value="interested">Interested</option>
+        <option value="viewing">Viewing</option>
+        <option value="applied">Applied</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <span class="msg" id="edit-msg"></span>
+    </div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Header -->
@@ -145,7 +207,11 @@
     <div class="section-label">Add a flat</div>
     <div class="form-grid">
       <div><label>Address</label><input id="f-addr" placeholder="12 Marchmont St, EH9" /></div>
-      <div><label>Listing URL</label><input id="f-link" type="url" placeholder="https://rightmove.co.uk/..." /></div>
+      <div>
+        <label>Listing URL</label>
+        <input id="f-link" type="url" placeholder="https://rightmove.co.uk/..." />
+        <span class="autofill-msg" id="autofill-msg"></span>
+      </div>
     </div>
     <div class="form-grid">
       <div><label>Monthly rent (£)</label><input id="f-rent" type="number" placeholder="1800" /></div>
@@ -199,21 +265,22 @@
 
 </div>
 <script>
-// ─── Config ───────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────
 const SUPA  = 'https://llszaawcnawztybbxhtm.supabase.co';
 const KEY   = 'sb_publishable_eGSmV8QpCFQGQXfgnmI3eA_VNFrgWdB';
 const HEADS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-// ─── State ───────────────────────────────────────────────
-let flats   = [];
-let filter  = 'all';
-let sort    = 'newest';
-let view    = 'cards';
-let map     = null;
-let tile    = null;
-let markers = [];
+// ─── State ────────────────────────────────────────────────────
+let flats      = [];
+let filter     = 'all';
+let sort       = 'newest';
+let view       = 'cards';
+let map        = null;
+let tile       = null;
+let markers    = [];
+let compareSet = new Set();
 
-// ─── Theme ───────────────────────────────────────────────
+// ─── Theme ────────────────────────────────────────────────────
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('ft-theme', t);
@@ -240,7 +307,7 @@ function tileUrl(t) {
   );
 })();
 
-// ─── Fetch ───────────────────────────────────────────────
+// ─── Fetch ────────────────────────────────────────────────────
 async function fetchListings() {
   try {
     const r = await fetch(SUPA + '/rest/v1/flats?order=created_at.desc', { headers: HEADS });
@@ -252,7 +319,7 @@ async function fetchListings() {
   if (view === 'map') updateMarkers();
 }
 
-// ─── Add ────────────────────────────────────────────────
+// ─── Add ──────────────────────────────────────────────────────
 async function addFlat() {
   const addr  = document.getElementById('f-addr').value.trim();
   const link  = document.getElementById('f-link').value.trim();
@@ -266,12 +333,16 @@ async function addFlat() {
   setMsg(msgEl, 'Geocoding…', 'ok');
   const coords = await geocode(addr);
 
-  const body = { address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes };
+  const body = {
+    address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes,
+    status_history: [{ status: 'interested', timestamp: new Date().toISOString() }]
+  };
   if (coords) { body.lat = coords.lat; body.lng = coords.lng; }
 
   const r = await fetch(SUPA + '/rest/v1/flats', { method: 'POST', headers: HEADS, body: JSON.stringify(body) });
   if (r.ok) {
     ['f-addr', 'f-link', 'f-rent', 'f-date', 'f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('autofill-msg').textContent = '';
     setMsg(msgEl, 'Added!', 'ok');
     setTimeout(() => { msgEl.textContent = ''; }, 2000);
     fetchListings();
@@ -282,16 +353,90 @@ async function addFlat() {
 
 async function removeFlat(id) {
   if (!confirm('Remove this flat?')) return;
+  compareSet.delete(id);
   await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, { method: 'DELETE', headers: HEADS });
   fetchListings();
 }
 
 async function setStatus(id, status) {
-  await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, { method: 'PATCH', headers: HEADS, body: JSON.stringify({ status }) });
+  const flat = flats.find(x => x.id === id);
+  if (!flat || (flat.status || 'interested') === status) return;
+  const hist = Array.isArray(flat.status_history) ? [...flat.status_history] : [];
+  hist.push({ status, timestamp: new Date().toISOString() });
+  await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, {
+    method: 'PATCH', headers: HEADS,
+    body: JSON.stringify({ status, status_history: hist })
+  });
   fetchListings();
 }
 
-// ─── Geocode ────────────────────────────────────────────
+// ─── Edit ─────────────────────────────────────────────────────
+let editingId       = null;
+let editingOrigAddr = null;
+
+function openEditModal(id) {
+  const f = flats.find(x => x.id === id);
+  if (!f) return;
+  editingId       = id;
+  editingOrigAddr = f.address;
+  document.getElementById('e-addr').value   = f.address || '';
+  document.getElementById('e-link').value   = f.link || '';
+  document.getElementById('e-rent').value   = f.monthly_rent || '';
+  document.getElementById('e-date').value   = f.move_in_date || '';
+  document.getElementById('e-notes').value  = f.notes || '';
+  document.getElementById('e-status').value = f.status || 'interested';
+  document.getElementById('edit-msg').textContent = '';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId       = null;
+  editingOrigAddr = null;
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+  const msgEl = document.getElementById('edit-msg');
+  const addr  = document.getElementById('e-addr').value.trim();
+  const link  = document.getElementById('e-link').value.trim();
+  const rent  = parseFloat(document.getElementById('e-rent').value) || null;
+  const date  = document.getElementById('e-date').value || null;
+  const notes = document.getElementById('e-notes').value.trim() || null;
+  const newSt = document.getElementById('e-status').value;
+
+  if (!addr) { setMsg(msgEl, 'Address required', 'err'); return; }
+
+  const flat  = flats.find(x => x.id === editingId);
+  const oldSt = flat ? (flat.status || 'interested') : 'interested';
+  const body  = { address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes };
+
+  if (newSt !== oldSt) {
+    body.status = newSt;
+    const hist = flat && Array.isArray(flat.status_history) ? [...flat.status_history] : [];
+    hist.push({ status: newSt, timestamp: new Date().toISOString() });
+    body.status_history = hist;
+  }
+
+  if (addr !== editingOrigAddr) {
+    setMsg(msgEl, 'Geocoding…', 'ok');
+    const coords = await geocode(addr);
+    if (coords) { body.lat = coords.lat; body.lng = coords.lng; }
+  }
+
+  setMsg(msgEl, 'Saving…', 'ok');
+  const r = await fetch(SUPA + '/rest/v1/flats?id=eq.' + editingId, {
+    method: 'PATCH', headers: HEADS, body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    closeEditModal();
+    fetchListings();
+  } else {
+    setMsg(msgEl, 'Error — try again', 'err');
+  }
+}
+
+// ─── Geocode ──────────────────────────────────────────────────
 async function geocode(address) {
   try {
     const q = encodeURIComponent(address + ', Edinburgh, UK');
@@ -305,7 +450,7 @@ async function geocode(address) {
   return null;
 }
 
-// ─── Realtime ───────────────────────────────────────────
+// ─── Realtime ─────────────────────────────────────────────────
 let ws, heartbeat;
 function connectRealtime() {
   const url = SUPA.replace('https://', 'wss://') + '/realtime/v1/websocket?apikey=' + KEY + '&vsn=1.0.0';
@@ -330,7 +475,138 @@ function connectRealtime() {
   ws.onerror = () => ws.close();
 }
 
-// ─── Filter / Sort / View ─────────────────────────────
+// ─── Compare ──────────────────────────────────────────────────
+function toggleCompare(id) {
+  if (compareSet.has(id)) {
+    compareSet.delete(id);
+  } else {
+    if (compareSet.size >= 3) return;
+    compareSet.add(id);
+  }
+  render();
+}
+
+function clearCompare() {
+  compareSet.clear();
+  render();
+}
+
+function renderCompare() {
+  let panel = document.getElementById('compare-panel');
+  if (compareSet.size < 2) {
+    if (panel) panel.style.display = 'none';
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'compare-panel';
+    panel.className = 'compare-panel';
+    document.getElementById('cards-wrap').appendChild(panel);
+  }
+  panel.style.display = '';
+
+  const selected = flats.filter(f => compareSet.has(f.id));
+  const rows = [
+    { label: 'Rent',       fn: f => fmt(f.monthly_rent) },
+    { label: 'Per person', fn: f => f.monthly_rent ? '£' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') : '—' },
+    { label: 'Move-in',   fn: f => fmtD(f.move_in_date) },
+    { label: 'Status',    fn: f => `<span class="badge badge-${f.status||'interested'}">${f.status||'interested'}</span>` },
+    { label: 'Notes',     fn: f => f.notes ? esc(f.notes) : '<span style="color:var(--muted)">—</span>' },
+  ];
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:600">Comparing ${selected.length} flat${selected.length > 1 ? 's' : ''}</div>
+      <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px" onclick="clearCompare()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear
+      </button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:6px 8px 8px;color:var(--muted);font-size:11px;font-weight:600;border-bottom:2px solid var(--accent);width:90px"></th>
+            ${selected.map(f => `<th style="text-align:left;padding:6px 8px 8px;font-weight:600;border-bottom:2px solid var(--accent);font-size:13px">${esc(f.address)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td style="color:var(--muted);font-size:11px;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap">${row.label}</td>
+              ${selected.map(f => `<td style="padding:7px 8px;border-bottom:1px solid var(--border)">${row.fn(f)}</td>`).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── URL paste-parse (Feature 5) ──────────────────────────────
+document.getElementById('f-link').addEventListener('paste', function() {
+  setTimeout(async () => {
+    const url = document.getElementById('f-link').value.trim();
+    if (!url.includes('rightmove.co.uk') && !url.includes('zoopla.co.uk')) return;
+    await parseListing(url);
+  }, 50);
+});
+
+async function parseListing(url) {
+  try {
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const r = await fetch(proxyUrl);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.contents) return;
+
+    const doc = new DOMParser().parseFromString(data.contents, 'text/html');
+    let rent = null, addr = null;
+
+    if (url.includes('rightmove.co.uk')) {
+      const priceEl = doc.querySelector('[data-test="price-qualifier"]') ||
+                      doc.querySelector('.propertyHeaderPrice') ||
+                      doc.querySelector('[class*="price"]');
+      if (priceEl) {
+        const m = priceEl.textContent.replace(/,/g, '').match(/\d+/);
+        if (m) rent = parseInt(m[0], 10);
+      }
+      const addrEl = doc.querySelector('[data-test="address-label"]') ||
+                     doc.querySelector('[class*="address"]') ||
+                     doc.querySelector('h1');
+      if (addrEl) addr = addrEl.textContent.trim();
+    } else if (url.includes('zoopla.co.uk')) {
+      const priceEl = doc.querySelector('[data-testid="price"]') ||
+                      doc.querySelector('[data-testid="listing-price"]') ||
+                      doc.querySelector('[class*="Price"]');
+      if (priceEl) {
+        const m = priceEl.textContent.replace(/,/g, '').match(/\d+/);
+        if (m) rent = parseInt(m[0], 10);
+      }
+      const addrEl = doc.querySelector('[data-testid="address"]') ||
+                     doc.querySelector('address') ||
+                     doc.querySelector('h1');
+      if (addrEl) addr = addrEl.textContent.trim();
+    }
+
+    let autofilled = false;
+    if (rent && !document.getElementById('f-rent').value) {
+      document.getElementById('f-rent').value = rent;
+      autofilled = true;
+    }
+    if (addr && !document.getElementById('f-addr').value) {
+      document.getElementById('f-addr').value = addr;
+      autofilled = true;
+    }
+    if (autofilled) {
+      const msgEl = document.getElementById('autofill-msg');
+      msgEl.textContent = 'Autofilled from listing';
+      setTimeout(() => { msgEl.textContent = ''; }, 3000);
+    }
+  } catch {
+    // fail silently
+  }
+}
+
+// ─── Filter / Sort / View ─────────────────────────────────────
 function setFilter(f) {
   filter = f;
   document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
@@ -360,18 +636,35 @@ function visible() {
   return list;
 }
 
-// ─── Render ───────────────────────────────────────────────
+// ─── Render ───────────────────────────────────────────────────
 function fmt(n)   { return n ? '£' + Math.round(n).toLocaleString('en-GB') : '—'; }
 function fmtD(d)  { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
 function gmaps(a) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a); }
 function esc(s)   { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function fmtStatusTs(history, currentStatus) {
+  if (!Array.isArray(history) || !history.length) return null;
+  const entries = history.filter(h => h.status === currentStatus);
+  if (!entries.length) return null;
+  const d = new Date(entries[entries.length - 1].timestamp);
+  if (isNaN(d)) return null;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function toggleNotes(btn) {
+  const body = btn.nextElementSibling;
+  body.hidden = !body.hidden;
+  btn.querySelector('.notes-chevron').style.transform = body.hidden ? '' : 'rotate(180deg)';
+}
+
 function render() {
   const el   = document.getElementById('flats-list');
   const list = visible();
-  if (!list.length) { el.innerHTML = '<div class="empty">No flats to show.</div>'; return; }
+  if (!list.length) { el.innerHTML = '<div class="empty">No flats to show.</div>'; renderCompare(); return; }
   el.innerHTML = list.map(f => {
-    const st = f.status || 'interested';
+    const st  = f.status || 'interested';
+    const ts  = fmtStatusTs(f.status_history, st);
+    const cmp = compareSet.has(f.id);
     return `
 <div class="flat-card" data-status="${st}">
   <div class="flat-top">
@@ -382,7 +675,10 @@ function render() {
         View listing
       </a>` : ''}
     </div>
-    <span class="badge badge-${st}">${st}</span>
+    <div style="text-align:right;flex-shrink:0;margin-left:10px">
+      <span class="badge badge-${st}">${st}</span>
+      ${ts ? `<div class="status-ts">${st.charAt(0).toUpperCase() + st.slice(1)} since ${ts}</div>` : ''}
+    </div>
   </div>
   <div class="flat-meta">
     <div><div class="meta-label">Monthly rent</div><div class="meta-value">${fmt(f.monthly_rent)}</div></div>
@@ -395,21 +691,41 @@ function render() {
       </a>
     </div></div>
   </div>
-  ${f.notes ? `<div class="flat-notes">${esc(f.notes)}</div>` : ''}
-  <div class="flat-footer">
-    <select class="status-select" onchange="setStatus('${f.id}', this.value)">
-      <option value="interested" ${st === 'interested' ? 'selected' : ''}>Interested</option>
-      <option value="viewing"    ${st === 'viewing'    ? 'selected' : ''}>Viewing</option>
-      <option value="applied"    ${st === 'applied'    ? 'selected' : ''}>Applied</option>
-      <option value="rejected"   ${st === 'rejected'   ? 'selected' : ''}>Rejected</option>
-    </select>
-    <button class="btn btn-ghost" onclick="removeFlat('${f.id}')">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      Remove
+  ${f.notes ? `
+  <div class="flat-notes-section">
+    <button class="notes-toggle" onclick="toggleNotes(this)">
+      <svg class="notes-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      Notes
     </button>
+    <div class="notes-body" hidden>${esc(f.notes)}</div>
+  </div>` : ''}
+  <div class="flat-footer">
+    <div class="footer-left">
+      <select class="status-select" onchange="setStatus('${f.id}', this.value)">
+        <option value="interested" ${st === 'interested' ? 'selected' : ''}>Interested</option>
+        <option value="viewing"    ${st === 'viewing'    ? 'selected' : ''}>Viewing</option>
+        <option value="applied"    ${st === 'applied'    ? 'selected' : ''}>Applied</option>
+        <option value="rejected"   ${st === 'rejected'   ? 'selected' : ''}>Rejected</option>
+      </select>
+      <button class="btn-compare${cmp ? ' selected' : ''}" onclick="toggleCompare('${f.id}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="14"/><rect x="14" y="7" width="7" height="10"/></svg>
+        ${cmp ? 'Selected' : 'Compare'}
+      </button>
+    </div>
+    <div class="footer-right">
+      <button class="btn btn-edit" onclick="openEditModal('${f.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+      <button class="btn btn-ghost" onclick="removeFlat('${f.id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Remove
+      </button>
+    </div>
   </div>
 </div>`;
   }).join('');
+  renderCompare();
 }
 
 function updateStats() {
@@ -430,7 +746,7 @@ function setMsg(el, text, type) {
   el.className = 'msg msg-' + (type === 'ok' ? 'ok' : 'err');
 }
 
-// ─── Map ────────────────────────────────────────────────
+// ─── Map ──────────────────────────────────────────────────────
 const STATUS_COLORS = { interested: '#3b82f6', viewing: '#f59e0b', applied: '#10b981', rejected: '#ef4444' };
 
 function makeMarkerIcon(status) {
@@ -473,7 +789,7 @@ function updateMarkers() {
   }
 }
 
-// ─── Boot ────────────────────────────────────────────────
+// ─── Boot ─────────────────────────────────────────────────────
 fetchListings();
 connectRealtime();
 </script>
