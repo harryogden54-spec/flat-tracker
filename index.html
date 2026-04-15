@@ -67,6 +67,9 @@
     .pill { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--muted); transition: all 0.15s; }
     .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
     .sort-select { padding: 5px 10px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); margin-left: auto; }
+    .btn-hide-unavailable { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; white-space: nowrap; }
+    .btn-hide-unavailable:hover { border-color: var(--muted); color: var(--text); }
+    .btn-hide-unavailable.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     /* Cards */
     .flats { display: flex; flex-direction: column; gap: 10px; }
@@ -260,6 +263,10 @@
       <button class="pill"        data-filter="applied"    onclick="setFilter('applied')">Applied</button>
       <button class="pill"        data-filter="rejected"   onclick="setFilter('rejected')">Rejected</button>
     </div>
+    <button class="btn-hide-unavailable" id="btn-hide-unavailable" onclick="toggleHideUnavailable()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      Hide gone
+    </button>
     <select class="sort-select" onchange="setSort(this.value)">
       <option value="newest">Newest first</option>
       <option value="rent-asc">Rent: low to high</option>
@@ -293,8 +300,9 @@ let view       = 'cards';
 let map        = null;
 let tile       = null;
 let markers    = [];
-let compareSet     = new Set();
-let unavailableSet = new Set(JSON.parse(localStorage.getItem('ft-unavailable') || '[]'));
+let compareSet       = new Set();
+let unavailableSet   = new Set(JSON.parse(localStorage.getItem('ft-unavailable') || '[]'));
+let hideUnavailable  = localStorage.getItem('ft-hide-unavailable') === 'true';
 
 // ─── Theme ────────────────────────────────────────────────────
 function setTheme(t) {
@@ -648,6 +656,7 @@ function switchView(v) {
 
 function visible() {
   let list = filter === 'all' ? [...flats] : flats.filter(f => (f.status || 'interested') === filter);
+  if (hideUnavailable) list = list.filter(f => !unavailableSet.has(f.id));
   if (sort === 'rent-asc')    list.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
   if (sort === 'rent-desc')   list.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
   if (sort === 'rating-desc') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -824,6 +833,14 @@ async function setRating(id, rating) {
   fetchListings();
 }
 
+// ─── Hide unavailable toggle ──────────────────────────────────
+function toggleHideUnavailable() {
+  hideUnavailable = !hideUnavailable;
+  localStorage.setItem('ft-hide-unavailable', hideUnavailable);
+  document.getElementById('btn-hide-unavailable').classList.toggle('active', hideUnavailable);
+  render();
+}
+
 // ─── Unavailable ──────────────────────────────────────────────
 function toggleUnavailable(id) {
   if (unavailableSet.has(id)) {
@@ -836,6 +853,7 @@ function toggleUnavailable(id) {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────
+if (hideUnavailable) document.getElementById('btn-hide-unavailable').classList.add('active');
 fetchListings();
 connectRealtime();
 </script>
