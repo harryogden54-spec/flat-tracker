@@ -59,7 +59,23 @@
     .autofill-msg { font-size: 11px; color: #10b981; display: block; margin-top: 3px; min-height: 15px; }
 
     /* Toolbar */
-    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 0.5rem; position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 0.6rem 0; }
+
+    /* Search */
+    .search-bar { width: 100%; margin-bottom: 0.75rem; position: relative; }
+    .search-bar input { border-radius: 20px; padding: 7px 14px 7px 34px; font-size: 13px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; display: none; }
+    .search-clear:hover { color: var(--text); }
+
+    /* Snackbar */
+    .snackbar { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-size: 13px; display: none; align-items: center; gap: 12px; z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.35); white-space: nowrap; }
+    .snackbar.visible { display: flex; }
+    .snackbar-undo { background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600; padding: 0; }
+    .snackbar-undo:hover { opacity: 0.75; }
+
+    /* No-geocode warning */
+    .no-geo { font-size: 11px; color: #f59e0b; display: flex; align-items: center; gap: 3px; margin-top: 2px; }
     .view-tabs { display: flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; flex-shrink: 0; }
     .view-tab { padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--muted); display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
     .view-tab.active { background: var(--accent); color: #fff; }
@@ -78,10 +94,12 @@
       padding: 1.1rem 1.1rem 1.1rem 1rem;
       border-left: 4px solid var(--border);
     }
-    .flat-card[data-status="interested"] { border-left-color: #3b82f6; }
-    .flat-card[data-status="viewing"]    { border-left-color: #f59e0b; }
-    .flat-card[data-status="applied"]    { border-left-color: #10b981; }
-    .flat-card[data-status="rejected"]   { border-left-color: #ef4444; }
+    .flat-card[data-status="interested"]       { border-left-color: #3b82f6; }
+    .flat-card[data-status="viewing-applied"]  { border-left-color: #8b5cf6; }
+    .flat-card[data-status="viewed-property"]  { border-left-color: #f59e0b; }
+    .flat-card[data-status="made-application"] { border-left-color: #10b981; }
+    .flat-card[data-status="offer"]            { border-left-color: #22c55e; }
+    .flat-card[data-status="rejected"]         { border-left-color: #ef4444; }
     .flat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .flat-address { font-size: 15px; font-weight: 600; }
     .flat-listing-link { font-size: 12px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; margin-top: 3px; }
@@ -119,10 +137,12 @@
     .btn-unavailable:hover { color: #ef4444; border-color: #ef4444; }
     .btn-unavailable.gone { color: #ef4444; border-color: #ef4444; }
     .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
-    .badge-interested { background: rgba(59,130,246,0.15);  color: #3b82f6; }
-    .badge-viewing    { background: rgba(245,158,11,0.15);  color: #f59e0b; }
-    .badge-applied    { background: rgba(16,185,129,0.15);  color: #10b981; }
-    .badge-rejected   { background: rgba(239,68,68,0.15);   color: #ef4444; }
+    .badge-interested        { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+    .badge-viewing-applied   { background: rgba(139,92,246,0.15);  color: #8b5cf6; }
+    .badge-viewed-property   { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+    .badge-made-application  { background: rgba(16,185,129,0.15);  color: #10b981; }
+    .badge-offer             { background: rgba(34,197,94,0.15);   color: #22c55e; }
+    .badge-rejected          { background: rgba(239,68,68,0.15);   color: #ef4444; }
     .status-select { width: auto; font-size: 12px; padding: 4px 8px; }
     .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
 
@@ -175,6 +195,12 @@
 </head>
 <body>
 
+<!-- Snackbar -->
+<div class="snackbar" id="snackbar">
+  <span id="snackbar-msg">Flat removed</span>
+  <button class="snackbar-undo" id="snackbar-undo" onclick="undoRemove()">Undo</button>
+</div>
+
 <!-- Edit Modal -->
 <div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
   <div class="modal">
@@ -192,12 +218,15 @@
     </div>
     <div style="margin-bottom:10px"><label>Notes</label><textarea id="e-notes" rows="3" placeholder="Pros, cons, things to check..."></textarea></div>
     <div style="margin-bottom:10px"><label>Status notes</label><textarea id="e-status-notes" rows="3" placeholder="How is the viewing process going? Any updates..."></textarea></div>
+    <div style="margin-bottom:10px"><label>Application notes</label><textarea id="e-app-notes" rows="3" placeholder="References sent, documents submitted, agency contact details..."></textarea></div>
     <div style="margin-bottom:1.25rem">
       <label>Status</label>
       <select id="e-status">
         <option value="interested">Interested</option>
-        <option value="viewing">Viewing</option>
-        <option value="applied">Applied</option>
+        <option value="viewing-applied">Viewing Applied</option>
+        <option value="viewed-property">Viewed Property</option>
+        <option value="made-application">Made Application</option>
+        <option value="offer">Offer</option>
         <option value="rejected">Rejected</option>
       </select>
     </div>
@@ -239,7 +268,13 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Details
       </div>
-      <svg class="details-chevron" id="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="copy-details-btn" onclick="event.stopPropagation();copyDetails()" title="Copy details to clipboard" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;display:flex;align-items:center;gap:4px;font-size:11px;font-family:inherit;border-radius:5px;transition:color 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </button>
+        <svg class="details-chevron" id="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
     </div>
     <div class="details-body" id="details-body" hidden>
       <div id="tenants-container"></div>
@@ -284,11 +319,13 @@
       </button>
     </div>
     <div class="filter-pills">
-      <button class="pill active" data-filter="all"        onclick="setFilter('all')">All</button>
-      <button class="pill"        data-filter="interested" onclick="setFilter('interested')">Interested</button>
-      <button class="pill"        data-filter="viewing"    onclick="setFilter('viewing')">Viewing</button>
-      <button class="pill"        data-filter="applied"    onclick="setFilter('applied')">Applied</button>
-      <button class="pill"        data-filter="rejected"   onclick="setFilter('rejected')">Rejected</button>
+      <button class="pill active" data-filter="all"                onclick="setFilter('all')">All</button>
+      <button class="pill"        data-filter="interested"        onclick="setFilter('interested')">Interested</button>
+      <button class="pill"        data-filter="viewing-applied"   onclick="setFilter('viewing-applied')">Viewing Applied</button>
+      <button class="pill"        data-filter="viewed-property"   onclick="setFilter('viewed-property')">Viewed Property</button>
+      <button class="pill"        data-filter="made-application"  onclick="setFilter('made-application')">Made Application</button>
+      <button class="pill"        data-filter="offer"             onclick="setFilter('offer')">Offer</button>
+      <button class="pill"        data-filter="rejected"          onclick="setFilter('rejected')">Rejected</button>
     </div>
     <button class="btn-hide-unavailable" id="btn-hide-unavailable" onclick="toggleHideUnavailable()">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -300,6 +337,13 @@
       <option value="rent-desc">Rent: high to low</option>
       <option value="rating-desc">Rating: high to low</option>
     </select>
+  </div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search-input" type="text" placeholder="Search by address…" oninput="setSearch(this.value)" />
+    <button class="search-clear" id="search-clear" onclick="clearSearch()" title="Clear search">&#x2715;</button>
   </div>
 
   <!-- Cards view -->
@@ -320,10 +364,13 @@ const KEY   = 'sb_publishable_eGSmV8QpCFQGQXfgnmI3eA_VNFrgWdB';
 const HEADS = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
 // ─── State ────────────────────────────────────────────────────
-let flats      = [];
-let filter     = 'all';
-let sort       = 'newest';
-let view       = 'cards';
+let flats          = [];
+let filter         = 'all';
+let sort           = 'newest';
+let view           = 'cards';
+let searchQuery    = '';
+let pendingDeletes = new Map(); // id -> timeoutId
+let snackbarPendingId = null;
 let map        = null;
 let tile       = null;
 let markers    = [];
@@ -402,11 +449,36 @@ async function addFlat() {
   }
 }
 
-async function removeFlat(id) {
-  if (!confirm('Remove this flat?')) return;
+function removeFlat(id) {
+  if (pendingDeletes.has(id)) return;
+  if (snackbarPendingId && snackbarPendingId !== id) commitDelete(snackbarPendingId);
+  snackbarPendingId = id;
+  pendingDeletes.set(id, null);
+  render();
+  const tid = setTimeout(() => commitDelete(id), 5000);
+  pendingDeletes.set(id, tid);
+  document.getElementById('snackbar').classList.add('visible');
+}
+
+async function commitDelete(id) {
+  pendingDeletes.delete(id);
+  if (snackbarPendingId === id) {
+    snackbarPendingId = null;
+    document.getElementById('snackbar').classList.remove('visible');
+  }
   compareSet.delete(id);
   await fetch(SUPA + '/rest/v1/flats?id=eq.' + id, { method: 'DELETE', headers: HEADS });
   fetchListings();
+}
+
+function undoRemove() {
+  if (!snackbarPendingId) return;
+  const tid = pendingDeletes.get(snackbarPendingId);
+  if (tid) clearTimeout(tid);
+  pendingDeletes.delete(snackbarPendingId);
+  snackbarPendingId = null;
+  document.getElementById('snackbar').classList.remove('visible');
+  render();
 }
 
 async function setStatus(id, status) {
@@ -436,6 +508,7 @@ function openEditModal(id) {
   document.getElementById('e-date').value         = f.move_in_date || '';
   document.getElementById('e-notes').value        = f.notes || '';
   document.getElementById('e-status-notes').value = f.status_notes || '';
+  document.getElementById('e-app-notes').value    = f.application_notes || '';
   document.getElementById('e-status').value       = f.status || 'interested';
   document.getElementById('edit-msg').textContent = '';
   document.getElementById('edit-modal').style.display = 'flex';
@@ -456,13 +529,14 @@ async function saveEdit() {
   const date  = document.getElementById('e-date').value || null;
   const notes       = document.getElementById('e-notes').value.trim() || null;
   const statusNotes = document.getElementById('e-status-notes').value.trim() || null;
+  const appNotes    = document.getElementById('e-app-notes').value.trim() || null;
   const newSt       = document.getElementById('e-status').value;
 
   if (!addr) { setMsg(msgEl, 'Address required', 'err'); return; }
 
   const flat  = flats.find(x => x.id === editingId);
   const oldSt = flat ? (flat.status || 'interested') : 'interested';
-  const body  = { address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes, status_notes: statusNotes };
+  const body  = { address: addr, link: link || null, monthly_rent: rent, move_in_date: date, notes, status_notes: statusNotes, application_notes: appNotes };
 
   if (newSt !== oldSt) {
     body.status = newSt;
@@ -563,7 +637,7 @@ function renderCompare() {
     { label: 'Rent',       fn: f => fmt(f.monthly_rent) },
     { label: 'Per person', fn: f => f.monthly_rent ? '£' + Math.round(f.monthly_rent / 3).toLocaleString('en-GB') : '—' },
     { label: 'Move-in',   fn: f => fmtD(f.move_in_date) },
-    { label: 'Status',    fn: f => `<span class="badge badge-${f.status||'interested'}">${f.status||'interested'}</span>` },
+    { label: 'Status',    fn: f => `<span class="badge badge-${f.status||'interested'}">${statusLabel(f.status||'interested')}</span>` },
     { label: 'Rating',    fn: f => f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating) : '—' },
     { label: 'Notes',     fn: f => f.notes ? esc(f.notes) : '<span style="color:var(--muted)">—</span>' },
   ];
@@ -683,9 +757,24 @@ function switchView(v) {
   if (v === 'map') initMap();
 }
 
+function setSearch(q) {
+  searchQuery = q.trim().toLowerCase();
+  document.getElementById('search-clear').style.display = q ? 'block' : 'none';
+  render();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  render();
+}
+
 function visible() {
   let list = filter === 'all' ? [...flats] : flats.filter(f => (f.status || 'interested') === filter);
   if (hideUnavailable) list = list.filter(f => !unavailableSet.has(f.id));
+  if (searchQuery) list = list.filter(f => f.address && f.address.toLowerCase().includes(searchQuery));
+  list = list.filter(f => !pendingDeletes.has(f.id));
   if (sort === 'rent-asc')    list.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
   if (sort === 'rent-desc')   list.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
   if (sort === 'rating-desc') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -733,8 +822,8 @@ function render() {
       </a>` : ''}
     </div>
     <div style="text-align:right;flex-shrink:0;margin-left:10px">
-      <span class="badge badge-${st}">${st}</span>
-      ${ts ? `<div class="status-ts">${st.charAt(0).toUpperCase() + st.slice(1)} since ${ts}</div>` : ''}
+      <span class="badge badge-${st}">${statusLabel(st)}</span>
+      ${ts ? `<div class="status-ts">${statusLabel(st)} since ${ts}</div>` : ''}
     </div>
   </div>
   <div class="flat-meta">
@@ -746,6 +835,7 @@ function render() {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Open
       </a>
+      ${!f.lat ? `<div class="no-geo"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>No pin</div>` : ''}
     </div></div>
   </div>
   <div class="flat-rating" style="margin:8px 0 4px">
@@ -767,13 +857,23 @@ function render() {
     </button>
     <div class="notes-body" hidden>${esc(f.status_notes)}</div>
   </div>` : ''}
+  ${f.application_notes ? `
+  <div class="flat-notes-section">
+    <button class="notes-toggle" onclick="toggleNotes(this)">
+      <svg class="notes-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      Application notes
+    </button>
+    <div class="notes-body" hidden>${esc(f.application_notes)}</div>
+  </div>` : ''}
   <div class="flat-footer">
     <div class="footer-left">
       <select class="status-select" onchange="setStatus('${f.id}', this.value)">
-        <option value="interested" ${st === 'interested' ? 'selected' : ''}>Interested</option>
-        <option value="viewing"    ${st === 'viewing'    ? 'selected' : ''}>Viewing</option>
-        <option value="applied"    ${st === 'applied'    ? 'selected' : ''}>Applied</option>
-        <option value="rejected"   ${st === 'rejected'   ? 'selected' : ''}>Rejected</option>
+        <option value="interested"       ${st === 'interested'       ? 'selected' : ''}>Interested</option>
+        <option value="viewing-applied"  ${st === 'viewing-applied'  ? 'selected' : ''}>Viewing Applied</option>
+        <option value="viewed-property"  ${st === 'viewed-property'  ? 'selected' : ''}>Viewed Property</option>
+        <option value="made-application" ${st === 'made-application' ? 'selected' : ''}>Made Application</option>
+        <option value="offer"            ${st === 'offer'            ? 'selected' : ''}>Offer</option>
+        <option value="rejected"         ${st === 'rejected'         ? 'selected' : ''}>Rejected</option>
       </select>
       <button class="btn-compare${cmp ? ' selected' : ''}" onclick="toggleCompare('${f.id}')">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="14"/><rect x="14" y="7" width="7" height="10"/></svg>
@@ -819,7 +919,9 @@ function setMsg(el, text, type) {
 }
 
 // ─── Map ──────────────────────────────────────────────────────
-const STATUS_COLORS = { interested: '#3b82f6', viewing: '#f59e0b', applied: '#10b981', rejected: '#ef4444' };
+const STATUS_COLORS  = { interested: '#3b82f6', 'viewing-applied': '#8b5cf6', 'viewed-property': '#f59e0b', 'made-application': '#10b981', offer: '#22c55e', rejected: '#ef4444' };
+const STATUS_LABELS  = { interested: 'Interested', 'viewing-applied': 'Viewing Applied', 'viewed-property': 'Viewed Property', 'made-application': 'Made Application', offer: 'Offer', rejected: 'Rejected' };
+function statusLabel(s) { return STATUS_LABELS[s] || s; }
 
 function makeMarkerIcon(status) {
   const c = STATUS_COLORS[status] || STATUS_COLORS.interested;
@@ -929,6 +1031,24 @@ function renderTenants() {
       }).join('') + `<button class="btn btn-edit" onclick="editTenants()" style="font-size:12px;padding:3px 10px;margin-top:4px">Edit</button>`;
     }
   }
+}
+
+function copyDetails() {
+  const lines = tenants.flatMap((t, i) => {
+    if (!t.name && !t.phone && !t.email) return [];
+    const parts = [`Tenant ${i + 1}: ${t.name || '—'}`];
+    if (t.phone) parts.push(`  Phone: ${t.phone}`);
+    if (t.email) parts.push(`  Email: ${t.email}`);
+    return parts;
+  });
+  if (!lines.length) return;
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('copy-details-btn');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    btn.style.color = '#10b981';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+  });
 }
 
 function editTenants() { detailsEditing = true; renderTenants(); }
